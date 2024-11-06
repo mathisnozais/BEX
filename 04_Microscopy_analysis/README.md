@@ -16,17 +16,26 @@ Docker image file is stored on Zenodo :
 wget -P $WORKING_DIR/Images/Docker https://zenodo.org/record/4636520/files/Seurat301v2.tar?download=1 NEED TO CHANGE
 
 # To load it
-docker load < $WORKING_DIR/Container/xxx/xxx.tar
+docker load < $WORKING_DIR/Container/xxx/cellprofiler425.tar
 
-# To run it
-docker run 
 ```
 
 #### Download data
+```bash
+wget #dowload in the input folder
 
-
+```
 ### Run the analysis
+Once the data are dowloaded in the input folder you can run the cellprofiler docker to run the analysis on all the confocal images.
 
+```bash
+# For Nikon images
+docker run -v /mnt/NASBIOINFO/LALT/BIOINFO/BEX/04_Microscopy/:/Analysis cellprofiler/cellprofiler:4.2.5 -i /Analysis/Input_nikon -o /Analysis/Output -p /Analysis/Pipeline_spot_mathisv6_Nikkon.cppipe
+
+# For Zeiss images
+docker run -v /mnt/NASBIOINFO/LALT/BIOINFO/BEX/04_Microscopy/:/Analysis cellprofiler/cellprofiler:4.2.5 -i /Analysis/Input_Zeiss -o /Analysis/Output -p /Analysis/Pipeline_spot_mathisv6_ZEISS.cppipe
+```
+Then you'll find in the output folder for each image analysed 2 pictures : one with and one without the overlay of the nucleus and spot identified by cellprofiler, and a csv file with the count of nucleus and spot.
 
 #### How to produce the paper images
 
@@ -37,26 +46,24 @@ Images > Color > Merge
 Edit > selection > specify
 
 For JKTBEXTAL 170322 : 850x850 - x = 895, y = 700  
-JKT BEX 170322 : 850x850 - x = 700, y = 350
-
-JKT ACII 170322 : 850x850 - x = 3500 y=1900
-
+JKT BEX 170322 : 850x850 - x = 700, y = 350  
+JKT ACII 170322 : 850x850 - x = 3500 y=1900  
 JKT TAL : 850x850 - x = 3200 y=450
 
-PEER JKTBEXTAL : 850x850 - x450 y1900
-
-PEER TAL : 850x850 - x1700 y2500
-PEER ACII : 850x850 - x2130 y2300
+PEER JKTBEXTAL : 850x850 - x450 y1900  
+PEER TAL : 850x850 - x1700 y2500  
+PEER ACII : 850x850 - x2130 y2300  
 PER BEX 850x850 - x4400y80
 
 Clone CRISPR:
-3B6 ACII : 850x850 - x50y4100
-3B6 BEX : x3900y4100
-3B6 BEXTALL : x3850 y3900
+3B6 ACII : 850x850 - x50y4100  
+3B6 BEX : x3900y4100  
+3B6 BEXTALL : x3850 y3900  
 3B6 TAL x3750y2500
 
-G3 ACII : x2100y1900
-G3 BEX : x3850y3900
-G3 BEXTAL : x50y2500
+G3 ACII : x2100y1900  
+G3 BEX : x3850y3900  
+G3 BEXTAL : x50y2500  
 G3 TAL : x0y2400
+
 Image > Crop
