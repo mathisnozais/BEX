@@ -37,11 +37,15 @@ Images > Color > Merge
 Edit > selection > specify
 
 For JKTBEXTAL 170322 : 850x850 - x = 895, y = 700
+
 JKT BEX 170322 : 850x850 - x = 700, y = 350
+
 JKT ACII 170322 : 850x850 - x = 3500 y=1900
+
 JKT TAL : 850x850 - x = 3200 y=450
 
 PEER JKTBEXTAL : 850x850 - x450 y1900
+
 PEER TAL : 850x850 - x1700 y2500
 PEER ACII : 850x850 - x2130 y2300
 PER BEX 850x850 - x4400y80
