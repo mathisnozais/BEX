@@ -1,0 +1,216 @@
+---
+title: "Script_BEX_Paper"
+author: "Mathis Nozais"
+date: "04/11/2024"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+#################
+
+Script for the mice scRNAseq for "BEX" paper.
+Made for Docker SEURAT 410
+
+#################
+
+Set your working directory to the folder clone from github
+```{r}
+WORK_DIR <- "../BEX"
+```
+
+
+# Pre-processing
+From raw matrix (extract from a bigger experiment with many data)
+```{r}
+# loading the matrices
+counts_matrix <- read.csv(paste0(WORK_DIR,"O2_Seurat_analysis/03_Data/RNA_matrix_sub.csv"), row.names = 1)
+metadata <- read.csv(paste0(WORK_DIR,"O2_Seurat_analysis/03_Data/Metadata_matrix_sub.csv"), row.names = 1)
+```
+
+Creation of the Seurat object
+```{r}
+sub_Seurat <- CreateSeuratObject(counts = counts_matrix, assay = "RNA", meta.data = metadata)
+
+sub_Seurat <- FindVariableFeatures(object = sub_Seurat,assay = "RNA", selection.method = "vst", nfeatures = 2000)
+
+sub_Seurat  <- ScaleData(sub_Seurat,assay="RNA",verbose = FALSE, do.center = TRUE)
+  
+sub_Seurat <- RunPCA(object = sub_Seurat,
+                    assay = "RNA",
+                    verbose = FALSE, #if TRUE print the top genes for each PC
+                    seed.use = 1234,
+                    npcs = 50) # sur les 50 premieres composantes
+  
+ElbowPlot(sub_Seurat, ndims = 30, reduction = "pca")
+
+DimPlot(sub_Seurat,reduction = "pca",dims = 9:10,group.by = "MULTI_ID") 
+DimPlot(sub_Seurat,reduction = "pca",dims = 10:11,group.by = "MULTI_ID") 
+DimPlot(sub_Seurat,reduction = "pca",dims = 11:12,group.by = "MULTI_ID") #nope
+DimPlot(sub_Seurat,reduction = "pca",dims = 13:14,group.by = "MULTI_ID") # nope
+
+sub_Seurat <- FindNeighbors(object = sub_Seurat, 
+                           dims = 1:10, 
+                           verbose = FALSE, 
+                           force.recalc = TRUE, 
+                           reduction = "pca")
+
+DefaultAssay(sub_Seurat) <- "RNA"
+
+sub_Seurat <- FindClusters(object = sub_Seurat, 
+                          resolution =1 ,
+                          verbose = FALSE,
+                          random.seed = 1234)
+sub_Seurat <- RunUMAP(object = sub_Seurat, reduction = "pca", seed.use = 1234, dims = 1:10)
+
+DimPlot(sub_Seurat, group.by = "MULTI_ID")
+```
+
+## Cell cycle regression
+```{r}
+## Cell cycle
+cc.genes.updated.2019 #for Human need to use bIOmart if using mice
+
+human = useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl",version = 105) #Using a fixed version of the db as of DEc 21 allow to avoid getLDS error
+mouse = useEnsembl(biomart = "ensembl", dataset = "mmusculus_gene_ensembl", version = 105)
+genesV2 = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = cc.genes$s.genes , mart = human, attributesL = c("mgi_symbol"), martL = mouse, uniqueRows=T)
+S.Genes_mouse <- unique(genesV2[, 2])
+
+genesV2 = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = cc.genes$g2m.genes , mart = human, attributesL = c("mgi_symbol"), martL = mouse, uniqueRows=T)
+G2M.Genes_mouse <- unique(genesV2[, 2])
+
+#Assign Cell-Cycle Scores
+sub_Seurat_reg <- CellCycleScoring(object = sub_Seurat, s.features = S.Genes_mouse, g2m.features = G2M.Genes_mouse, set.ident = TRUE)
+
+ Tsne<-data.frame(
+    tSNE_1 = sub_Seurat_reg@reductions$umap@cell.embeddings[,1],
+    tSNE_2= sub_Seurat_reg@reductions$umap@cell.embeddings[,2],
+    gene= sub_Seurat_reg@meta.data$S.Score
+  )
+  HTO= sub_Seurat_reg@meta.data$MULTI_ID
+  Max=max(sub_Seurat_reg@meta.data$S.Score)
+  Min=min(sub_Seurat_reg@meta.data$S.Score)
+  ggplotly(ggplot(Tsne,aes(x=tSNE_1,y=tSNE_2))+geom_point(aes(color=gene,shape=HTO))+
+    scale_colour_gradient2(low = "blue",mid="orange",high="red",name="S score",midpoint=(Max+Min)/2))
+  
+  Tsne<-data.frame(
+    tSNE_1 = sub_Seurat_reg@reductions$umap@cell.embeddings[,1],
+    tSNE_2= sub_Seurat_reg@reductions$umap@cell.embeddings[,2],
+    gene= sub_Seurat_reg@meta.data$G2M.Score
+  )
+  HTO= sub_Seurat_reg@meta.data$MULTI_ID
+  Max=max(sub_Seurat_reg@meta.data$G2M.Score)
+  Min=min(sub_Seurat_reg@meta.data$G2M.Score)
+  
+  ggplotly(ggplot(Tsne,aes(x=tSNE_1,y=tSNE_2))+geom_point(aes(color=gene,shape=HTO))+
+    scale_colour_gradient2(low = "blue",mid="orange",high="red",name="G2M score",midpoint=(Max+Min)/2))
+
+  DimPlot(sub_Seurat_reg, reduction = "umap", group.by = "Phase")
+```
+
+Regression on the Seurat object
+```{r}
+#cell cycle regression
+sub_Seurat_reg <- ScaleData(sub_Seurat_reg, vars.to.regress = c("S.Score", "G2M.Score"), features = sub_Seurat_reg@assays$RNA@var.features)
+  
+sub_Seurat_reg <- RunPCA(object = sub_Seurat_reg,
+                    assay = "RNA",
+                    verbose = FALSE, #if TRUE print the top genes for each PC
+                    seed.use = 1234,
+                    npcs = 50) #sur les 50 premieres composantes
+```
+
+### Re clustering without cycle
+```{r}
+ElbowPlot(sub_Seurat_reg, ndims = 30, reduction = "pca")
+
+sub_Seurat_reg <- FindNeighbors(object = sub_Seurat_reg, 
+                           dims = 1:12, 
+                           verbose = FALSE, 
+                           force.recalc = TRUE, 
+                           reduction = "pca")
+DefaultAssay(sub_Seurat_reg) <- "RNA"
+sub_Seurat_reg <- FindClusters(object = sub_Seurat_reg, 
+                          resolution =1 ,
+                          verbose = FALSE,
+                          random.seed = 1234)
+sub_Seurat_reg <- RunUMAP(object = sub_Seurat_reg, reduction = "pca", seed.use = 1234, dims = 1:12)
+
+DimPlot(sub_Seurat_reg, group.by = "MULTI_ID")
+```
+
+
+## Add metadata
+```{r}
+Idents(sub_Seurat_reg) <- "MULTI_ID"
+#Add tum_stage slot 
+sub_Seurat_reg@meta.data$tum_stage <-  ""
+
+# I'll call pre tum also physio to simplify
+sub_Seurat_reg@meta.data[c(WhichCells(sub_Seurat_reg,idents = "Thymus-790")),]$tum_stage = "Tumoral"  
+sub_Seurat_reg@meta.data[c(WhichCells(sub_Seurat_reg,idents = "Thymus-814")),]$tum_stage = "Physiological"  
+sub_Seurat_reg@meta.data[c(WhichCells(sub_Seurat_reg,idents = "Thymus-813")),]$tum_stage = "Physiological"  
+
+DimPlot(sub_Seurat_reg, group.by = "tum_stage", cols = c("#99C3FB","#ED7D31"),pt.size = 1)+ theme_void()
+
+DimPlot(sub_Seurat_reg, group.by = "tum_stage", cols = c("#99C3FB","#F09456"),pt.size = 1)+ theme_void()
+```
+
+
+# Mice Analysis
+
+## DGE
+```{r}
+
+tmp_sub <- sub_Seurat_reg
+
+Idents(sub_Seurat_reg) <- "tum_stage"
+tum_phys <- FindMarkers(sub_Seurat_reg, ident.1 = "Tumoral", ident.2 = "Physiological", logfc.threshold = 0,min.pct = 0) #all threshold to 0 to get a maximum of genes
+
+FindMarkers(sub_Seurat_reg, ident.1 = "Tumoral", ident.2 = "Physiological",min.pct = 0.5)
+
+
+install.packages("tidyverse")
+library(tidyverse)
+
+
+library(dplyr)
+library(viridis)
+
+
+tum_phys2 <- tum_phys
+#temp <- tum_phys2[tum_phys2$p_val_adj < 10e-70,]
+tum_phys2 <- tum_phys2 %>% dplyr::arrange(avg_log2FC) # order row
+tum_phys2$gene <- rownames(tum_phys2)
+tum_phys2$absfold <- abs(tum_phys2$avg_log2FC) 
+tum_phys2$logpval <- -log10(tum_phys2$p_val_adj)
+
+
+tum_phys3 <- subset(tum_phys2, absfold >1)
+temp2 <- rbind(x=head(tum_phys3,n=10),y=tail(tum_phys3,n=10))
+ggplot(temp2, aes(x = fct_inorder(gene),fill = -log10(p_val_adj), y = avg_log2FC))+ theme_minimal()+ geom_bar(stat = "identity",width=.7)+ theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))+coord_flip() +scale_fill_viridis_c(option="magma", direction = -1,limits=c(30,150)) + theme(text=element_text(size=16),axis.text = element_text(size = 16))
+
+#tum_phys3 <- subset(tum_phys2, logpval >80)
+#temp2 <- rbind(x=head(tum_phys3,n=10),y=tail(tum_phys3,n=10))
+
+
+
+install.packages("forecast")
+library(forecast) # used to easily keep the order of my dataframe
+library(viridis)
+ggplot(temp, aes(x = fct_inorder(gene),fill = -log10(p_val_adj), y = avg_log2FC)) + theme_bw() + geom_bar(stat = "identity")+ theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))+coord_flip() +scale_fill_viridis(option="magma", direction = -1)
+#+ scale_fill_gradient(low="blue", high="red")
+```
+
+## BEX plot
+```{r}
+# Old colors : c("gainsboro","moccasin","goldenrod1","orange","red","firebrick4")
+# New colors : c(#F1EBE8","E7ADAE","E77CAE","DB54A8","BE2EB9","#7618CA","#5014BA","#230A6A")
+install.packages("patchwork")
+library(patchwork) # to modify multi ggplot2 by Seurat
+FeaturePlot(sub_Seurat_reg, features = c("Bex1","Bex2","Bex3","Bex4","Bex6"),pt.size = 1.5,cols =c("#F1EBE8","#E7ADAE","#E77CAE","#DB54A8","#BE2EB9","#7618CA","#5014BA","#230A6A"),ncol = 5) + plot_layout(guides = "collect")& theme_void() & theme(plot.title = element_text(hjust = 0.5, size = 30),legend.key.height = unit(1.3,'cm'),legend.text=element_text(size=15))
+
+
+FeaturePlot(sub_Seurat_reg, features = c("Bex1","Bex2","Bex3","Bex4","Bex6"),pt.size = 1.5,cols =c("#F1EBE8","#E7ADAE","#E77CAE","#DB54A8","#BE2EB9","#7618CA","#5014BA","#230A6A")) + guide_area() + plot_layout(ncol = 3,guides = "collect")& theme_void() & theme(plot.title = element_text(hjust = 0.5, size = 30),legend.key.height = unit(1.6,'cm'), legend.key.width = unit(1,'cm'),legend.text=element_text(size=18))
+```
+
