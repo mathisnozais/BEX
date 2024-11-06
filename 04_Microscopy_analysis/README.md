@@ -36,8 +36,7 @@ Open Czi and Images > Color > split channel
 Images > Color > Merge
 Edit > selection > specify
 
-For JKTBEXTAL 170322 : 850x850 - x = 895, y = 700
-
+For JKTBEXTAL 170322 : 850x850 - x = 895, y = 700  
 JKT BEX 170322 : 850x850 - x = 700, y = 350
 
 JKT ACII 170322 : 850x850 - x = 3500 y=1900
