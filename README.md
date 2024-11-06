@@ -1,17 +1,13 @@
 # Ectopic expression of BEX genes in T-cell Acute Lymphoblastic leukemia
 
-Authors : Quessada Julie<sup>1,2*</sup>, Nozais Mathis<sup>1*</sup>, Grosjean Clémence<sup>1</sup>, Pankaew Saran<sup>1,3</sup>, Sara Allelova<sup>1</sup>, Potier Delphine<sup>1</sup>, Loosveld Marie<sup>1,2</sup> & Payet Bornet Dominique<sup>1,@</sup>
-
-1 Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France
-2 APHM, Hôpital La Timone, Laboratoire d’Hématologie, Marseille, France 
-3 Aix Marseille Univ, CNRS, I2M, Marseille, France 
-
-*These authors contributed equally: Julie Quessada & Mathis Nozais
-
+Authors : Quessada Julie<sup>1,2*</sup>, Nozais Mathis<sup>1*</sup>, Grosjean Clémence<sup>1</sup>, Pankaew Saran<sup>1,3</sup>, Sara Allelova<sup>1</sup>, Potier Delphine<sup>1</sup>, Loosveld Marie<sup>1,2</sup> & Payet Bornet Dominique<sup>1,@</sup>  
+1 Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France  
+2 APHM, Hôpital La Timone, Laboratoire d’Hématologie, Marseille, France  
+3 Aix Marseille Univ, CNRS, I2M, Marseille, France  
+*These authors contributed equally: Julie Quessada & Mathis Nozais  
 @Corresponding authors : Dominique Payet-Bornet
 
-Link to article : (TO come) put DOI
-
+Link to article : (TO come) put DOI  
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14044880.svg)](https://doi.org/10.5281/zenodo.14044880)
 
 If you have any questions on this analysis, please contact [Mathis Nozais](mailto:mathis.nozais@live.fr)
