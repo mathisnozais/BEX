@@ -1,11 +1,11 @@
 # Ectopic expression of BEX genes in T-cell Acute Lymphoblastic leukemia
 
-Authors : Quessada Julie<sup>1,2*</sup>, Nozais Mathis<sup>1*</sup>, Grosjean Clémence<sup>1</sup>, Pankaew Saran<sup>1,3</sup>, Sara Allelova<sup>1</sup>, Potier Delphine<sup>1</sup>, Loosveld Marie<sup>1,2</sup> & Payet Bornet Dominique<sup>1,@</sup>  
+Authors : Quessada Julie<sup>1,2*</sup>, Nozais Mathis<sup>1*</sup>, Grosjean Clémence<sup>1</sup>, Pankaew Saran<sup>1,3</sup>, Sara Allelova<sup>1</sup>, Potier Delphine<sup>1</sup>, Loosveld Marie<sup>1,2,@</sup> & Payet Bornet Dominique<sup>1,@</sup>  
 1 Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France  
 2 APHM, Hôpital La Timone, Laboratoire d’Hématologie, Marseille, France  
 3 Aix Marseille Univ, CNRS, I2M, Marseille, France  
 *These authors contributed equally: Julie Quessada & Mathis Nozais  
-@Corresponding authors : Dominique Payet-Bornet
+@Corresponding authors :Loosveld Marie, Dominique Payet-Bornet
 
 Link to article : (TO come) put DOI  
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14044880.svg)](https://doi.org/10.5281/zenodo.14044880)
@@ -22,9 +22,9 @@ This repository contains the instructions and material to reproduce the analysis
 - Fastq preprocessing of the CRISPR part is discribed in the 01_BulkNRA_preprocessing folder <br/>
 In order to re do Fastq preprocessing you can follow guidelines and script here : [01_FASTQ_Preprocessing script](01_FASTQ_Preprocessing/README.md)
 - Seurat analysis of the mice scRNAseq is discribed in the 02_Seurat_analysis folder <br/>
-In order to re do Seurat Analysis you can follow guidelines and script here : [02_Seurat_analysis script](02_Seurat_analysis/README.md)
+In order to re do the Figure 1 with Seurat Analysis you can follow guidelines and script here : [02_Seurat_analysis script](02_Seurat_analysis/README.md)
 - TCGA and CRISPR are on folder 03_DESEQ2_analysis for <br/>
-In order to 
+In order to re do Figure 2 & 3 for TCGA and 5 for CRISPR part.
 - The analysis of the confocal images are described in the 04_Microscopy_analysis folder <br/>
 In order to re do the detection and counting of the nuclei and PLA spot, and to obtain the same image as the paper.
 

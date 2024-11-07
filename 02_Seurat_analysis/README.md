@@ -52,7 +52,7 @@ dowload link xxx
 ```
 
 ### Run the analysis
-You can access the code chunk by chunk via "Script_BEX_paper" Rmd
-One code for pre-processing
-one for analysis
+You can access the code chunk by chunk via "Script_BEX_paper" Rmd. You'll be able to perform the preprocessing starting with the raw count matrices.
+Then you'll be able to reproduce the figure in the paper.
+You juste need to modify the WORKDIR at the begining of the script.
 
