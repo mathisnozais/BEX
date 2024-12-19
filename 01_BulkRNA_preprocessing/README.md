@@ -26,6 +26,7 @@ gunzip $WORKING_DIR/References/ xxxx .gz
 ```
 
 #### Working environment
+> :warning: In order to execute analysis, you must load the provided conda environment. Conda must be installed on your system. See https://docs.anaconda.com/miniconda/install/ for details on Conda installation.
 
 The bulkRNA preprocessing was performed under a conda environment including `multiQC`, `Hisat2`, `Trimmomatic` and `featureCounts`.
 The yaml config environment can be found into the [Container folder](Container/RNA_preproc).
@@ -42,7 +43,7 @@ Fastq files available on SRA xxxx.
 ```bash
 #Download the Fastq files
 # Jurkat rep1
-wget -P $WORKING_DIR/01_BulkRNA_preprocessing/01_Data
+wget -P $WORKING_DIR/01_BulkRNA_preprocessing/01_RawData/Raw
 # Jurkat rep2
 wget
 # Jurkat rep3
@@ -57,23 +58,18 @@ wget
 
 ### Run the preprocessing
 
-We made a script that briefly will perform a first step of xxx `Trimmomatic`, mapping will be performed with `Hisat2` and the gene count will be performed with `featureCounts`
-
-
-Before running the script you should modify the rawdata and workdir directory. The rawadata folder should be where you downloaded the data. 
-The workdir
+We made a script that briefly will perform a first step of xxx `Trimmomatic`, mapping will be performed with `Hisat2` and the gene count will be performed with `featureCounts`.
 
 > [!Important]  
 > Do not modify any folder name or rawdata files, it will mess up the automated detection of samples.
-
 
 > [!TIP]  
 > You can use Tmux to launch the script in background for a long period of times.
 
 ```bash
-# You should activate your conda environement before launching the script : see prerequisite section.
-
+# You should activate your conda environement and set the working_dir before launching the script : see prerequisite section.
 sh $WORKING_DIR/01_BulkRNA_preprocessing/02_Script/script_RNA_preprocess.sh
 
-
 ```
+Once the preprocessing is done, you should get all the bam files in the [Preprocessed folder](01_BulkRNA_preprocessing/03_Preprocessed/).
+You can now move to the next step : [BulkRNA_analysis](03_BulkRNA_analysis/).
