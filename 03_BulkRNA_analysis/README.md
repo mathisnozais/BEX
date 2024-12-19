@@ -28,7 +28,7 @@ export WORKING_DIR=/home/nozais/workspace/BEX
 #### Docker images
 
 > [!WARNING] 
-> :warning: In order to execute analysis, you must load the provided docker images onto your Docker. Docker must be installed on your system. See https://docs.docker.com/install/ for details on Docker installation.
+> In order to execute analysis, you must load the provided docker images onto your Docker. Docker must be installed on your system. See https://docs.docker.com/install/ for details on Docker installation.
 
 Docker image file is stored on Zenodo :
 
@@ -43,8 +43,7 @@ docker run -d --name rna431-2 -p 9090:8787 -v $WORKING_DIR:/workspace rna431-2
 ```
 
 > [!NOTE]  
-> Two different type of data where analysed as bulkRNAseq. TCGA (Figure 2 & 3) and CRISPR KO (Figure 5). The following instruction will be first for TCGA and then CRISPR KO
-
+> Two different type of data where analysed as bulkRNAseq. TCGA (Figure 2 & 3) and CRISPR KO (Figure 5). The following instruction will be first for [TCGA](#Run the TCGA analysis)and then [CRISPR KO](#Run the CRISPR-CAS9 KO bulkRNA-seq analysis).
 ## Run the TCGA analysis
 
 ### Download data
