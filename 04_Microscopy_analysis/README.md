@@ -7,6 +7,16 @@ This repository describes how the confocal data where analysed with CellProfiler
 ## Setup the experiment
 ### Prerequisites
 
+#### Clone Github repository
+
+Use your favorite method to clone this repository in a chosen folder. This will create a "BEX" folder with all the source code.
+You must set an environment variable called WORKING_DIR with a value set to the path to this BEX folder. For instance, if I clone the Git repository in "/home/nozais/workspace", then the WORKING_DIR variable will be set to :
+
+```bash
+
+export WORKING_DIR=/home/nozais/workspace/BEX
+
+```
 
 #### Docker images
 Docker image file is stored on Zenodo :
@@ -16,14 +26,19 @@ Docker image file is stored on Zenodo :
 wget -P $WORKING_DIR/Images/Docker https://zenodo.org/record/4636520/files/Seurat301v2.tar?download=1 NEED TO CHANGE
 
 # To load it
-docker load < $WORKING_DIR/Container/xxx/cellprofiler425.tar
+docker load --input $WORKING_DIR/Container/xxxx
 
 ```
 
 #### Download data
-```bash
-wget #dowload in the input folder
 
+Raw images from confocal are available on xxxxx. 2 different batch of images where acquired on two different confocal microscopes, the parameter for analysis are different and thus files are separated in two different folder.
+```bash
+# Get the images aquired with Nikon  
+wget -P $WORKING_DIR/04_Microscopy_analysis/01_RawData/Input_Nikon/
+
+# Get the images aquired with Zeiss  
+wget -P $WORKING_DIR/04_Microscopy_analysis/01_RawData/Input_Zeiss/
 ```
 ### Run the analysis
 Once the data are dowloaded in the input folder you can run the cellprofiler docker to run the analysis on all the confocal images.
@@ -36,6 +51,8 @@ docker run -v /mnt/NASBIOINFO/LALT/BIOINFO/BEX/04_Microscopy/:/Analysis cellprof
 docker run -v /mnt/NASBIOINFO/LALT/BIOINFO/BEX/04_Microscopy/:/Analysis cellprofiler/cellprofiler:4.2.5 -i /Analysis/Input_Zeiss -o /Analysis/Output -p /Analysis/Pipeline_spot_mathisv6_ZEISS.cppipe
 ```
 Then you'll find in the output folder for each image analysed 2 pictures : one with and one without the overlay of the nucleus and spot identified by cellprofiler, and a csv file with the count of nucleus and spot.
+
+!!!!! to verify outfut folder in Fiji file !!!!!
 
 #### How to produce the paper images
 

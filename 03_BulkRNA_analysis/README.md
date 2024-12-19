@@ -43,14 +43,22 @@ docker run -d --name rna431-2 -p 9090:8787 -v $WORKING_DIR:/workspace rna431-2
 ```
 
 > [!NOTE]  
-> Two different type of data where analysed as bulkRNAseq. TCGA (Figure 2 & 3) and CRISPR KO (Figure 5). The following instruction will be first for [TCGA](#Run the TCGA analysis)and then [CRISPR KO](#Run the CRISPR-CAS9 KO bulkRNA-seq analysis).
+> Two different type of data where analysed as bulkRNAseq. TCGA (Figure 2 & 3) and CRISPR KO (Figure 5). The following instruction will be first for TCGA and then CRISPR KO
+
 ## Run the TCGA analysis
 
-### Download data
-You can avoid running pre-processing code by downloading the final object used.
+TCGA data where obtained via the database. You can re do the downloading step to produce the matrices following xx :
+You can avoid this step by going to the next section and download the final object.
 ```bash
 
-dowload link xxx
+REPRENDRE LA PREP DES DATA
+```
+
+### Download data
+
+```bash
+
+dowload link object xxx
 ```
 ### Pre-processing 
 First of all we need to prepare a DESeq2 object with all the data that matters for the projet from TCGA. 
@@ -67,19 +75,15 @@ WILL NEED TO CLEAN THE FILE PATH IN RMD
 
 ## Run the CRISPR-CAS9 KO bulkRNA-seq analysis
 ### Download data
-You can avoid running pre-processing code by downloading the final object used.
+You can start by running the [pre-processing](01_BulkRNA_preprocessing/) code or start from here by downloading the final object used.
+
 ```bash
 
 wget -P folder of interest xxxx site
 ```
 
-### Pre-processing
-Before starting you should activate your conda environment. All the script is automated you'll need to modify the path to the raw data that you should have dwoloaded here : xxx
 
-```bash
-conda activate RNAbulk
 
-```
 ### Plot 
 
 
