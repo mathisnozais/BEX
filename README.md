@@ -14,40 +14,45 @@ If you have any questions on this analysis, please contact [Mathis Nozais](mailt
 
 ---
 ### Overview
-This repository contains the instructions and material to reproduce the analysis reported in the article. The bio-informatic analysis are divided in 4 part : mice scRNAseq, TCGA bulkRNAseq, CRISPR bulkRNAseq and microscopy.
 
+This repository contains the instructions and material to reproduce the analysis reported in the article. The bio-informatic analysis are divided in 4 part : 
+- Mice scRNAseq
+- TCGA bulkRNAseq
+- CRISPR bulkRNAseq 
+- Microscopy.
 
+ Source code is available in this github repository. Required data and builded Docker images are available respectively in SRA/GEO and Zenodo. Instructions to reproduce the analysis are provided in the different subdirectories:
 
- Source code is available in the github repository. Required data and builded Docker images are available respectively in SRA/GEO and Zenodo. Instructions to reproduce the analysis are provided in the different subdirectories:
-- Fastq preprocessing of the CRISPR part is discribed in the 01_BulkNRA_preprocessing folder <br/>
-In order to re do Fastq preprocessing you can follow guidelines and script here : [01_FASTQ_Preprocessing script](01_FASTQ_Preprocessing/README.md)
-- Seurat analysis of the mice scRNAseq is discribed in the 02_Seurat_analysis folder <br/>
+- Mice scRNAseq
+    - Seurat preprocessing and analysis of the mice scRNAseq is discribed in the 02_Seurat_analysis folder <br/>
 In order to re do the Figure 1 with Seurat Analysis you can follow guidelines and script here : [02_Seurat_analysis script](02_Seurat_analysis/README.md)
-- TCGA and CRISPR are on folder 03_DESEQ2_analysis for <br/>
-In order to re do Figure 2 & 3 for TCGA and 5 for CRISPR part.
-- The analysis of the confocal images are described in the 04_Microscopy_analysis folder <br/>
-In order to re do the detection and counting of the nuclei and PLA spot, and to obtain the same image as the paper.
+- TCGA bulkRNAseq
+    - Deseq2 analysis of the TCGA database is discribed in the 03_DESEQ2_analysis folder/xxxx <br/>
+    In order to re do Figure 2 & 3 with TCGA you can follow guidelines and script here : [03_DESEQ2_analysis folder/xxxx ](01_BulkNRA_preprocessing/README.md)
+- CRISPR bulkRNAseq
+    - Fastq preprocessing of the CRISPR part is discribed in the 01_BulkNRA_preprocessing folder <br/>
+	In order to re do Fastq preprocessing you can follow guidelines and script here : [01_BulkNRA_preprocessing xxx](01_BulkNRA_preprocessing/README.md)
+    - Deseq2 analysis is discribed in the 03_DESEQ2_analysis folder/xxxx <br/>
+    In order to re do Figure 5 you can follow guidelines and script here : [03_DESEQ2_analysis folder/xxxx ](01_BulkNRA_preprocessing/README.md)
+- Microscopy
+    - The analysis of the confocal images are described in the 04_Microscopy_analysis folder <br/>
+	In order to re do the detection and counting of the nuclei and PLA spot, and to obtain the same image as the paper you can follow : [04_Microscopy_analysis ](01_BulkNRA_preprocessing/README.md)
 
 ---
 ### Data Availability
-#### mice scRNAseq
-We give you access to the raw count matrix and metadata to assign each cell to a sample for the mice scRNAseq.
-
-#### CRISPR KO bulkRNA
-We give you access to FASTQ files.
+#### Mice scRNAseq
+Raw count matrix and metadata to assign each cell to a sample for the mice scRNAseq experiment are available in xxxx under the accession number xxx
+Final R Seurat object can be dowloaded via Zenodo xxxx 
 
 #### TCGA bulkRNA
-Data can be dowloaded from the TCGA website and informations are given on wich samples where used.
+Data can be dowloaded from the TCGA website and informations are given on wich samples where used in the detailed analysis.
+
+#### CRISPR bulkRNAseq
+xx FASTQ files are available in SRA under the accession number : xxxx
+Final Deseq2 object can be dowloaded via Zenodo xxx
 
 #### Microscopy 
-Raw files 
-
-#### Seurat analysis
-- Seurat rmd script to reproduce the preprocessing can be found [here](02_Seurat_analysis/01_Script/Experiment_preprocessing.Rmd) and analysis rmd script [here](02_Seurat_analysis/01_Script/Experiment_analysis.Rmd) change link
-
-#### Deseq analysis
-
-#### Microscopy analysis
+Raw files are accessible via xxx. It concern xx cell lines with xx condition each.
 
 #### Docker images
-You have access to three dockers : one for scRNAseq analysis (name docker 410), one for bulkRNAseq (RNA.... name docker) and one for microscopy (name docker). All availabe in [Zenodo](https://doi.org/10.5281/zenodo.4636520) change link
+You have access to three dockers : one for scRNAseq analysis (named docker 410), one for bulkRNAseq (RNA.... name docker) and one for microscopy (name docker). All availabe in [Zenodo](https://doi.org/10.5281/zenodo.4636520) change link
