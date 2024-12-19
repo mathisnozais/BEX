@@ -63,11 +63,17 @@ We made a script that briefly will perform a first step of xxx `Trimmomatic`, ma
 Before running the script you should modify the rawdata and workdir directory. The rawadata folder should be where you downloaded the data. 
 The workdir
 
-> [!NOTE]  
+> [!Important]  
 > Do not modify any folder name or rawdata files, it will mess up the automated detection of samples.
 
-```bash
 
-docker run 
+> [!TIP]  
+> You can use Tmux to launch the script in background for a long period of times.
+
+```bash
+# You should activate your conda environement before launching the script : see prerequisite section.
+
+sh $WORKING_DIR/01_BulkRNA_preprocessing/02_Script/script_RNA_preprocess.sh
+
 
 ```
