@@ -26,6 +26,8 @@ export WORKING_DIR=/home/nozais/workspace/BEX
 ```
 
 #### Docker images
+
+> [!WARNING] 
 > :warning: In order to execute analysis, you must load the provided docker images onto your Docker. Docker must be installed on your system. See https://docs.docker.com/install/ for details on Docker installation.
 
 Docker image file is stored on Zenodo :
