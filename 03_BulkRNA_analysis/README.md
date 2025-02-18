@@ -2,7 +2,13 @@
 
 ## Overview
 
-This repository describes how the analysis of the CRISPR KO where performed.
+This part of the repository describes how the analysis of the different bulkRNA-seq data were performed.
+
+> [!NOTE]  
+> Two different type of data where analysed as bulkRNAseq. TCGA (Figure 2 & 3) and CRISPR KO (Figure 5). 
+
+You can follow the TCGA analysis [here](#tcga-analysis), or the CRISPR-CAS9 BEX KO analysis [here](#crispr-CAS9-analysis).
+For both analysis the setup will be similar.
 
 ## Setup the experiment
 ### Prerequisites
@@ -34,7 +40,7 @@ Docker image file is stored on Zenodo :
 
 ```bash
 # To download RNA431-2
-wget -P $WORKING_DIR/Container/RNA_analysis/ htppsxxxxxx
+wget -P $WORKING_DIR/Container/RNA_analysis/ https://zenodo.org/records/14044880/files/rna431-2.tar
 
 docker load --input $WORKING_DIR/Container/RNA_analysis/rna431-2.tar
 
@@ -42,48 +48,72 @@ docker load --input $WORKING_DIR/Container/RNA_analysis/rna431-2.tar
 docker run -d --name rna431-2 -p 9090:8787 -v $WORKING_DIR:/workspace rna431-2
 ```
 
-> [!NOTE]  
-> Two different type of data where analysed as bulkRNAseq. TCGA (Figure 2 & 3) and CRISPR KO (Figure 5). The following instruction will be first for TCGA and then CRISPR KO
+## TCGA analysis
 
-## Run the TCGA analysis
-
-TCGA data where obtained via the database. You can re do the downloading step to produce the matrices following xx :
-You can avoid this step by going to the next section and download the final object.
-```bash
-
-REPRENDRE LA PREP DES DATA
-```
+All the analysis to produces the figures can be performed using "RNA_TCGA_BEX.Rmd" script.
+TCGA data where obtained via the CDC database. You can re do the downloading step to produce the matrices in the beggining of the rmd.
+You can also avoid this step by going to the next section and load directly the raw data matrix.
+You can also used as an input a specific matrix for your plot of interest.
 
 ### Download data
 
 ```bash
+#Link to all data available for Seurat Analysis
 
-dowload link object xxx
+
+https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_AL.rds ??
+
+
+
+	## Matrices with raw TCGA dowloaded data
+wget dowload -P xxx https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_AML.rds # For AML RNA matrix 
+wget dowload -P xxx https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_P2.rds  # For P2 RNA matrix 
+wget dowload -P xxx https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_P3.rds  # For P3 RNA matrix 
+
+wget dowload xxx https://zenodo.org/records/14044880/files/clinial_matrix_TARGET_AML.rds # For AML clinical matrix 
+wget dowload xxx https://zenodo.org/records/14044880/files/clinial_matrix_TARGET_P2.rds # For P2 clinical matrix 
+wget dowload  xxx https://zenodo.org/records/14044880/files/clinial_matrix_TARGET_P3.rds For P3 clinical matrix 
+
+	## Subset and gene converted matrices for T-ALL analysis and figure
+wget dowload -P xxx https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_TALL_convert.rds # For T-ALL RNA matrix 
+wget dowload -P xxx https://zenodo.org/records/14044880/files/Clinical_matrix_TARGET_TALL_convert.rds # For T-ALL clinical matrix 
+
+	## Subset and gene converted matrices for AL analysis and figure
+wget dowload -P xxx https://zenodo.org/records/14044880/files/clinical_matrix_TARGET_AL.rds # For Acute Leuk clinical matrix 
+wget -P xxx https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_AL_convert.rds # For Acute Leuk rna matrix 
+
+	## Subset and gene converted matrices for ALL analysis and figure
+wget dowload link _matrix_TARGET_ALL_convert.rds xxx # For ALL clinical matrix 
+wget dowload -P xxx lhttps://zenodo.org/records/14044880/files/RNA_matrix_TARGET_ALL_convert.rds# For ALL RNA matrix 
+
+# Other files needed for the analysis 
+wget https://zenodo.org/records/14044880/files/gencode.v36.annotation.gtf
+
 ```
-### Pre-processing 
-First of all we need to prepare a DESeq2 object with all the data that matters for the projet from TCGA. 
-We created 3 object one with Acute Leukemia, one with only Acute Lymphoblastic Leukemia (ALL) and one with only T cell Acute Lymphoblastic leukemia (T-ALL).
-Using RNA_TCGA_BEX_preproc.Rmd you'll be able to perform our pre-processing to create the objects.
 
+## CRISPR-CAS9 analysis
 
+All the analysis to produces the figures can be performed using "Bex_RNA_CRISPR.Rmd" script.
+At this step we assume that the pre-processing was already performed. If not you can run the [pre-processing](01_BulkRNA_preprocessing/) code or start from here by downloading input matrix used.
 
-### Plot 
-Using RNA_TCGA_BEX_analysis.Rmd you'll be able to reproduce plot that we use in our paper.
-
-WILL NEED TO CLEAN THE FILE PATH IN RMD
-
-
-## Run the CRISPR-CAS9 KO bulkRNA-seq analysis
 ### Download data
-You can start by running the [pre-processing](01_BulkRNA_preprocessing/) code or start from here by downloading the final object used.
 
 ```bash
+# Feature count matrix
+wget -P folder of interest xxxx siteJKT_CRISPR_featurecounts.txt
+# Deseq object 
+wget https://zenodo.org/records/14044880/files/dds_CRISPR.rds
 
-wget -P folder of interest xxxx site
+#Files needed for the analysis 
+# List of target gene from  https://link.springer.com/article/10.1007/s12185-018-2518-z
+wget gene_target_TAL1
+# Public peak files that were dowloaded from https://remap.univ-amu.fr/target_page/TAL1:9606
+wget -P https://zenodo.org/records/14044880/files/GSE25000.bed #GSE25000
+wget -P https://zenodo.org/records/14044880/files/GSE29180.bed #GSE29180
+#Sanda TAL1 target groups, those files where made based on https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11063860/
+wget SandaA
+wget sandaB
+wget sandaC
 ```
-
-
-
-### Plot 
 
 
