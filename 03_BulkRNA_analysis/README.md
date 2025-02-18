@@ -100,20 +100,18 @@ At this step we assume that the pre-processing was already performed. If not you
 
 ```bash
 # Feature count matrix
-wget -P folder of interest xxxx siteJKT_CRISPR_featurecounts.txt
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data JKT_CRISPR_featurecounts.txt
 # Deseq object 
-wget https://zenodo.org/records/14044880/files/dds_CRISPR.rds
+wget -P $WORKING_DIR/03_BulkRNA_analysis/03_Output https://zenodo.org/records/14044880/files/dds_CRISPR.rds
 
-#Files needed for the analysis 
-# List of target gene from  https://link.springer.com/article/10.1007/s12185-018-2518-z
-wget gene_target_TAL1
+#Files needed for the analysis stored on Zenodo
 # Public peak files that were dowloaded from https://remap.univ-amu.fr/target_page/TAL1:9606
-wget -P https://zenodo.org/records/14044880/files/GSE25000.bed #GSE25000
-wget -P https://zenodo.org/records/14044880/files/GSE29180.bed #GSE29180
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/GSE25000.bed #GSE25000
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/GSE29180.bed #GSE29180
 #Sanda TAL1 target groups, those files where made based on https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11063860/
-wget SandaA
-wget sandaB
-wget sandaC
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/SANDA_GR_A.txt #SandaA
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/SANDA_GR_B.txt #SandaB
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/SANDA_GR_C.txt #SandaC
 ```
 
 
