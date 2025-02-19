@@ -83,6 +83,10 @@ wget -P $WORKING_DIR/01_Data https://zenodo.org/records/14044880/files/Park_data
 
 ```
 
+#### Analysis
+You can use the script ["BEX_scRNA_Git"](/02_Seurat_analysis/02_Script/BEX_scRNA_Git.Rmd)   for the conversion.
+
+
 > [!NOTE]  
 > For Park et al, available data are in h5ad format. We converted it to an robj that you can directly download. If you want to perform the conversion you can follow the command [down bellow](#h5ad-conversion) 
 
