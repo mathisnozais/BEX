@@ -73,6 +73,7 @@ The crop region are listed below :
 Once the region is selected go to Image > Crop
 Manually set the scale with Analyze > Set scale 
 For condition that came from a czi file the distance in pixel = 14.1681, other param are set to 1  # LSM880 
+
 For condition that came from a nd2 file the distance in pixel = 11.9087, other param are set to 1  # Nikon
 The unit : μm
 Then analyse > tools > scale bar. Using : police 35, thick : 10, width 10um
