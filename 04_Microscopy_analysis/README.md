@@ -50,10 +50,10 @@ Then you'll find in the output/CellProfiler folder for each image analysed 2 pic
 
 #### How to produce the paper images
 
-Here are the reproducible parameter to produce paper images. Indeed we need a crop version of the picture to clearly see the PLA signal without zoom-in.
-You'll need Fiji for example : 
-Open the picture of interest
-Edit > selection > specify
+Here are the reproducible parameter to produce paper images. Indeed we need a crop version of the picture to clearly see the PLA signal without zoom-in.\
+You'll need Fiji for example : \
+Open the picture of interest\
+Edit > selection > specify\
 The crop region are listed below : 
 - JKTBEXTAL 170322 : 850x850 - x = 895, y = 700  
 - JKT BEX 170322 : 850x850 - x = 700, y = 350  

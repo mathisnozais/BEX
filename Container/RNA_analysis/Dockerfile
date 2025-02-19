@@ -36,7 +36,6 @@ RUN apt-get update && apt-get install -y optipng \
 # Install R packages
 RUN R -e 'install.packages( "devtools")'
 RUN R -e 'install.packages( "BiocManager")'
-#RUN R -e 'BiocManager::install(version="3.18")'
 RUN R -e 'library(BiocManager)'
 
 RUN R -e 'install.packages( "rmarkdown")'
@@ -62,6 +61,16 @@ RUN R -e 'library(devtools)'
 RUN R -e 'devtools::install_version("rjson",version="0.2.15")' #needed for complexheatmpa
 RUN R -e 'BiocManager::install("ComplexHeatmap")' 
 RUN R -e 'BiocManager::install("ChIPQC")'
+
+RUN R -e 'install.packages("tidyverse")'
+RUN R -e 'install.packages("ggthemes")'
+RUN R -e 'install.packages("paletteer")'
+RUN R -e 'install.packages("corrplot")'
+RUN R -e 'BiocManager::install("rtracklayer")'
+RUN R -e 'install.packages("DT")'
+RUN R -e 'BiocManager::install("ChIPseeker")'
+RUN R -e 'BiocManager::install("pathview")'
+RUN R -e 'BiocManager::install("TxDb.Hsapiens.UCSC.hg38.knownGene")'
 
 #RUN R -e 'install.packages("remotes")'
 #RUN R -e 'BiocManager::install("pcaMethods")'

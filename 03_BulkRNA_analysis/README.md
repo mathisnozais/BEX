@@ -22,7 +22,7 @@ In order to prepare the environment for analysis execution, it is required to:
  
 #### Clone Github repository
 
-Use your favorite method to clone this repository in a chosen folder. This will create a "BEX" folder with all the source code.
+Use your favorite method to clone this repository in a chosen folder. This will create a "BEX" folder with all the source code.\
 You must set an environment variable called WORKING_DIR with a value set to the path to this BEX folder. For instance, if I clone the Git repository in "/home/nozais/workspace", then the WORKING_DIR variable will be set to :
 
 ```bash
@@ -50,9 +50,9 @@ docker run -d --name rna431-2 -p 9090:8787 -v $WORKING_DIR:/workspace rna431-2
 
 ## TCGA analysis
 
-All the analysis to produces the figures can be performed using "RNA_TCGA_BEX.Rmd" script.
-TCGA data where obtained via the CDC database. You can re do the downloading step to produce the matrices in the beggining of the rmd.
-You can also avoid this step by going to the next rmd section and load directly the raw data matrix.
+All the analysis to produces the figures can be performed using "RNA_TCGA_BEX.Rmd" script.\
+TCGA data where obtained via the CDC database. You can re do the downloading step to produce the matrices in the beggining of the rmd.\
+You can also avoid this step by going to the next rmd section and load directly the raw data matrix.\
 You can also used as an input a specific matrix for your plot of interest.
 
 ### Download data
