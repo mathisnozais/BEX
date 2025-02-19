@@ -7,7 +7,7 @@ HasImagePlaneDetails:False
 
 Images:[module_num:1|svn_version:'Unknown'|variable_revision_number:2|show_window:True|notes:['To begin creating your project, use the Images module to compile a list of files and/or folders that you want to analyze. You can also specify a set of rules to include only the desired files in your selected folders.']|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
     :
-    Filter images?:No filtering
+    Filter images?:Images only
     Select the rule criteria:and (extension does isimage) (directory doesnot containregexp "[\\\\\\\\/]\\\\.")
 
 Metadata:[module_num:2|svn_version:'Unknown'|variable_revision_number:6|show_window:True|notes:['The Metadata module optionally allows you to extract information describing your images (i.e, metadata) which will be stored along with your measurements. This information can be contained in the file name and/or location, or in an external file.']|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
@@ -41,7 +41,7 @@ NamesAndTypes:[module_num:3|svn_version:'Unknown'|variable_revision_number:8|sho
     Relative pixel spacing in X:1.0
     Relative pixel spacing in Y:1.0
     Relative pixel spacing in Z:1.0
-    Select the rule criteria:and (file does contain "")
+    Select the rule criteria:and (file does endwith "")
     Name to assign these images:Nuclei
     Name to assign these objects:Cell
     Select the image type:Grayscale image
@@ -111,7 +111,7 @@ GrayToColor:[module_num:6|svn_version:'Unknown'|variable_revision_number:4|show_
 IdentifyPrimaryObjects:[module_num:7|svn_version:'Unknown'|variable_revision_number:15|show_window:False|notes:['Identify the nuclei from the nuclear stain image. ']|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
     Select the input image:Nuclei
     Name the primary objects to be identified:Nuclei
-    Typical diameter of objects, in pixel units (Min,Max):40,300
+    Typical diameter of objects, in pixel units (Min,Max):40,250
     Discard objects outside the diameter range?:Yes
     Discard objects touching the border of the image?:Yes
     Method to distinguish clumped objects:Shape
@@ -175,7 +175,7 @@ RescaleIntensity:[module_num:9|svn_version:'Unknown'|variable_revision_number:3|
 IdentifyPrimaryObjects:[module_num:10|svn_version:'Unknown'|variable_revision_number:15|show_window:False|notes:['Identify the foci using per-object thresholding to compute a threshold for each individual nuclei object. Some manual adjustment of the smoothing filter size and maxima supression distance is required to optimize segmentation.']|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
     Select the input image:RescaleIntensity
     Name the primary objects to be identified:Spot
-    Typical diameter of objects, in pixel units (Min,Max):2,15
+    Typical diameter of objects, in pixel units (Min,Max):3,15
     Discard objects outside the diameter range?:Yes
     Discard objects touching the border of the image?:Yes
     Method to distinguish clumped objects:Intensity

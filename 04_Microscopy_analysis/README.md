@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository describes how the confocal data where analysed with CellProfiler en Fiji. It contains the instructions and material to reproduce the analysis reported in the article. To reproduce the analysis, you have to first, prepare the environments (see "Prerequisites" section below), then execute the analysis described in the "Run the analysis" section below.
+This repository describes how the confocal data where analysed with CellProfiler and Fiji. It contains the instructions and material to reproduce the analysis reported in the article. To reproduce the analysis, you have to first, prepare the environments (see "Prerequisites" section below), then execute the analysis described in the "Run the analysis" section below.
 
 ## Setup the experiment
 ### Prerequisites
@@ -19,68 +19,62 @@ export WORKING_DIR=/home/nozais/workspace/BEX
 ```
 
 #### Docker images
-Docker image file is stored on Zenodo :
+The docker we used is from CellProfiler DockerHub with the 4.2.5 version. You can download it with the link bellow : 
 
 ```bash
-# To download 
-wget -P $WORKING_DIR/Images/Docker https://zenodo.org/record/4636520/files/Seurat301v2.tar?download=1 NEED TO CHANGE
 
-# To load it
-docker load --input $WORKING_DIR/Container/xxxx
+# To get the docker
+docker pull cellprofiler/cellprofiler:4.2.5
 
 ```
 
 #### Download data
 
-Raw images from confocal are available on xxxxx. 2 different batch of images where acquired on two different confocal microscopes, the parameter for analysis are different and thus files are separated in two different folder.
+Raw images from confocal are available on Zenodo. 2 different batch of images where acquired on two different confocal microscopes (Nikon and Zeiss)
 ```bash
-# Get the images aquired with Nikon  
-wget -P $WORKING_DIR/04_Microscopy_analysis/01_RawData/Input_Nikon/
 
-# Get the images aquired with Zeiss  
-wget -P $WORKING_DIR/04_Microscopy_analysis/01_RawData/Input_Zeiss/
+# Get the images 
+wget -P $WORKING_DIR/04_Microscopy_analysis/01_Data https://zenodo.org/records/14044880/files/Confocal_images.tar.gz
+tar -xvzf $WORKING_DIR/04_Microscopy_analysis/01_Data/Confocal_images.tar.gz
+
 ```
 ### Run the analysis
 Once the data are dowloaded in the input folder you can run the cellprofiler docker to run the analysis on all the confocal images.
 
 ```bash
-# For Nikon images
-docker run -v /mnt/NASBIOINFO/LALT/BIOINFO/BEX/04_Microscopy/:/Analysis cellprofiler/cellprofiler:4.2.5 -i /Analysis/Input_nikon -o /Analysis/Output -p /Analysis/Pipeline_spot_mathisv6_Nikkon.cppipe
 
-# For Zeiss images
-docker run -v /mnt/NASBIOINFO/LALT/BIOINFO/BEX/04_Microscopy/:/Analysis cellprofiler/cellprofiler:4.2.5 -i /Analysis/Input_Zeiss -o /Analysis/Output -p /Analysis/Pipeline_spot_mathisv6_ZEISS.cppipe
+docker run -v $WORKING_DIR/04_Microscopy_analysis/:/Analysis cellprofiler/cellprofiler:4.2.5 -i /Analysis/01_Data/Confocal_images -o /Analysis/03_Output/CellProfiler -p /Analysis/02_Script/pipeline_spot_mathisv7.cppipe
+
 ```
-Then you'll find in the output folder for each image analysed 2 pictures : one with and one without the overlay of the nucleus and spot identified by cellprofiler, and a csv file with the count of nucleus and spot.
-
-!!!!! to verify outfut folder in Fiji file !!!!!
+Then you'll find in the output/CellProfiler folder for each image analysed 2 pictures : one with and one without the overlay of the nucleus and spot identified by cellprofiler, and a csv file with the count of nucleus and spot.
 
 #### How to produce the paper images
 
-Here are the reproducible parameter to to produce paper images. Indeed we need a crop version of the picture to clearly see the PLA signal without zoom-in.
-
-Open Czi and Images > Color > split channel
-Images > Color > Merge
+Here are the reproducible parameter to produce paper images. Indeed we need a crop version of the picture to clearly see the PLA signal without zoom-in.
+You'll need Fiji for example : 
+Open the picture of interest
 Edit > selection > specify
+The crop region are listed below : 
+- JKTBEXTAL 170322 : 850x850 - x = 895, y = 700  
+- JKT BEX 170322 : 850x850 - x = 700, y = 350  
+- JKT ACII 170322 : 850x850 - x = 3500 y=1900  
+- JKT TAL : 850x850 - x = 3200 y=450
 
-For JKTBEXTAL 170322 : 850x850 - x = 895, y = 700  
-JKT BEX 170322 : 850x850 - x = 700, y = 350  
-JKT ACII 170322 : 850x850 - x = 3500 y=1900  
-JKT TAL : 850x850 - x = 3200 y=450
+- PEER JKTBEXTAL : 850x850 - x450 y1900  
+- PEER TAL : 850x850 - x1700 y2500  
+- PEER ACII : 850x850 - x2130 y2300  
+- PER BEX 850x850 - x4400y80
+  
+- 3B6 ACII : 850x850 - x1900y2000
+- 3B6 BEX : x3900y4100  
+- 3B6 BEXTALL : x3850 y3900  
+- 3B6 TAL x3750y2500
 
-PEER JKTBEXTAL : 850x850 - x450 y1900  
-PEER TAL : 850x850 - x1700 y2500  
-PEER ACII : 850x850 - x2130 y2300  
-PER BEX 850x850 - x4400y80
+Once the region is selected go to Image > Crop
+Manually set the scale with Analyze > Set scale 
+For condition that came from a czi file the distance in pixel = 14.1681, other param are set to 1  # LSM880 
+For condition that came from a nd2 file the distance in pixel = 11.9087, other param are set to 1  # Nikon
+The unit : μm
+Then analyse > tools > scale bar. Using : police 35, thick : 10, width 10um
 
-Clone CRISPR:  
-3B6 ACII : 850x850 - x50y4100  
-3B6 BEX : x3900y4100  
-3B6 BEXTALL : x3850 y3900  
-3B6 TAL x3750y2500
-
-G3 ACII : x2100y1900  
-G3 BEX : x3850y3900  
-G3 BEXTAL : x50y2500  
-G3 TAL : x0y2400
-
-Image > Crop
+Barplot where produce with GraphPad Prism using csv from CellProfiler pipeline.
