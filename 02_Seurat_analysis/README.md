@@ -57,13 +57,13 @@ wget -P $WORKING_DIR/01_Data https://zenodo.org/records/14044880/files/BC_BEX_mi
 
 ```
 
-For suplementary figure
+For supplementary figure
 ```bash
 
 # Mice thymus in scRNAseq
 # From Scarauzzino et al - https://www.embopress.org/doi/full/10.15252/embj.2021110023
-# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE184544 
- THymus TOT_WT ?? # Raw data
+# Raw data can be accessed here : 
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE184544 # With thymus_tot and thymus_DN
 wget -P $WORKING_DIR/01_Data https://zenodo.org/records/14044880/files/ThymusWT_clean_cc-regressed_noADT.Robj # Processed object 
 
 
