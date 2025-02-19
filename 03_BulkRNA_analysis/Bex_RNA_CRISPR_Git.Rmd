@@ -1,0 +1,469 @@
+---
+output: html_document
+author: "Mathis Nozais"
+output:
+  html_document:
+    code_folding: hide
+    code_download: true
+editor_options: 
+  chunk_output_type: console
+---
+
+#################
+
+Script for CRISPR bulkRNA analysis for "BEX" paper.
+Made for Docker RNA 431
+
+#################
+
+```{r}
+library(Rsubread)
+library(DESeq2)
+library(ggplot2)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(dplyr)
+library(fgsea)
+library(msigdbr)
+library(ComplexHeatmap)
+library(ggrepel)
+library(stats)
+library(enrichplot)
+library(ChIPseeker)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(pathview)
+```
+
+Clone recap with genes that are KO: 
+D2 et D2bis are electroporated only
+1D9 - BEX1 et 5 et 2 (triple KO)
+2G5 - BEX1 et 5 et 2 (triple KO)
+3B6 - BEX1 et 5 et 2 (triple KO)
+Jurkat - WT
+Jurkatbis - WT
+
+```{r}
+# Set the variable to your working directory
+WORKING_DIR <- "/yourcomputer/BEX/03_BulkRNA_analysis" # should point to the github folder that you clone
+WORKING_DIR <- "/workspace/NASBioinfo/LALT/BIOINFO/BEX/GIT_TESTING/03_BulkRNA_analysis"  # to remove
+#  Path to the folder that will contain output objects
+OUTPUT_PATH <- (paste0(WORKING_DIR,"/03_Output/"))
+```
+
+#import feature count data
+You can start by loading the feature count matrix if you performed pre-processing or download it. But you can also start directly at the loading DeseqObj.
+```{r}
+count_mtx<-read.table(file = paste0(WORKING_DIR,"/01_Data/Preprocessed/JKT_CRISPR_featurecounts.txt"),header = T)
+head(count_mtx)
+
+# Prep count matrix for DESeq2
+count_mtx <- as.data.frame(count_mtx[,-c(2:6)]) #exclude non informative column
+count_mtx2 <- as.data.frame(count_mtx[,-1])
+rownames(count_mtx2) <- count_mtx[,1]
+names(count_mtx2) <- c("1D9","2G5","3B6","D2bis","D2","Jktbis","Jkt") #D2 are only electroporated 
+head(count_mtx2)
+
+#prep sample info matrix
+condition <- factor(c("TripleKo","TripleKo","TripleKo","Control","Control", "Control","Control"))
+
+colData <- data.frame(row.names = colnames(count_mtx2), condition)
+```
+
+
+# Cleaning data
+```{r}
+DESeq.ds <- DESeqDataSetFromMatrix(countData = count_mtx2,
+colData = colData,
+design = ~ condition)
+
+#Genes with very low counts in all samples provide little evidence for differential expression, it might impact further analysis by adding multiple test in DGE reducing the power of the stat test
+
+# filter inf 10 for 50% samples
+nb_sample = ncol(count_mtx2)
+keep <- rowSums(counts(DESeq.ds) >= 10) >= nb_sample*0.5
+DESeq.ds <- DESeq.ds[keep,]
+
+dds <- DESeq(DESeq.ds)
+
+saveRDS(dds, file = paste0(WORKING_DIR,"/03_Output/dds_CRISPR.rds"))
+```
+
+# Loading Deseq obj
+```{r}
+dds <- readRDS(file = paste0(WORKING_DIR,"/03_Output/dds_CRISPR.rds"))
+```
+
+
+# DGE Triple Ko
+```{r}
+res <- results(dds, contrast = c("condition", "TripleKo", "Control"))
+res_sorted_by_padj <- res[order(res$padj), ]
+```
+
+## Volcano
+```{r}
+df_tripleKO <- as.data.frame(res_sorted_by_padj)
+df_tripleKO$absfoldchange <- abs(df_tripleKO$log2FoldChange)
+df_tripleKO$genename <- rownames(df_tripleKO)
+
+df_tripleKO$Significant <- ifelse(df_tripleKO$padj < 0.05 & df_tripleKO$absfoldchange >1, "Significative","Not Significative")
+dim(na.omit(df_tripleKO[df_tripleKO$Significant == "Significative",]))
+
+size_axis <- max(abs(ceiling(min(na.omit(df_tripleKO$log2FoldChange)))), abs(ceiling(max(na.omit(df_tripleKO$log2FoldChange))))) #Get the extreme value of foldchange to set automaticaly limit of the ggplot and scale it around 0
+
+# foldchange negative means epxression si lower in tripleKo than WT
+# foldchange positive means epxression si higher in tripleKo than WT
+
+#### Volcano plot #####
+ggplot(df_tripleKO, aes(x = log2FoldChange, y = -log10(padj))) +
+  geom_point(aes(color = Significant))+
+   scale_color_manual(values = c("#3A3A3A","#C00000" ,"#3A3A3A")) +
+   theme_bw(base_size = 12) + theme(legend.position = "bottom")  +geom_vline(xintercept=c(-1, 1), col="black")+
+        geom_hline(yintercept=-log10(0.05), col="black")+
+ geom_text_repel(
+    data = subset(df_tripleKO, df_tripleKO$padj < 10^-6),
+    aes(label = genename),
+    size = 4,
+    box.padding = unit(0.35, "lines"),
+    point.padding = unit(0.3, "lines"))+
+  xlim(-(size_axis), size_axis)
+
+```
+
+```{r}
+# Get number of differentially expressed genes
+dim(df_tripleKO[df_tripleKO$Significant == 'Significative',])
+dim(df_tripleKO[df_tripleKO$Significant == 'Significative' & df_tripleKO$log2FoldChange > 0, ])
+dim(df_tripleKO[df_tripleKO$Significant == 'Significative' & df_tripleKO$log2FoldChange < 0, ])
+```
+
+
+## Heatmap 
+```{r}
+vsd <- vst(dds,blind = FALSE)
+
+mat_vst <- assay(vsd)
+
+gene_vec <- na.omit(df_tripleKO[df_tripleKO$Significant == "Significative",])$genename
+
+mat_vst_sub <- mat_vst[gene_vec,]
+scaled_mat = t(scale(t(mat_vst_sub))) # row centered matrix Z score
+
+hm_colors = c("dodgerblue1","white","red2")
+#to automate scale
+hm_limit =c(min(scaled_mat),0, max(scaled_mat))
+
+column_order <- c("1D9","2G5","3B6","D2bis","D2","Jktbis","Jkt")
+
+scaled_mat <- scaled_mat[, column_order]
+
+annotation_df <- colData
+annotation_df <- annotation_df[column_order, , drop = FALSE]
+column_annotation <- HeatmapAnnotation(
+  df = annotation_df,
+  col = list(condition = c("TripleKo" = "blue","Control"="black"))
+)
+
+
+set.seed(123) # for kmean reproducibility
+ComplexHeatmap::Heatmap(scaled_mat,show_column_names = T ,cluster_columns = F,cluster_rows = T,column_names_side = "top",top_annotation = column_annotation, row_split = 2, column_split = annotation_df$condition)
+```
+
+# TAL1 
+
+## Get genes from Sanda chipseq
+```{r}
+# Get bed files and select only JKT https://remap.univ-amu.fr/target_page/TAL1:9606
+# Two dataset avalaible :
+#GSE25000 : https://pubmed.ncbi.nlm.nih.gov/21179004/ Palii
+#GSE29181 : https://pubmed.ncbi.nlm.nih.gov/22897851/ Sanda
+
+#To choose between the two dataset we checked the intersection with gene manually found of interest from this review https://link.springer.com/article/10.1007/s12185-018-2518-z
+# Creation of manually curated TAL Target vector
+manual_TAL_target <-read.table(file = paste0(WORKING_DIR,"/01_Data/gene_target_TAL1.txt"))#some gene are present multiple time in the list to catch all their possible gene name, gene are from the review above
+other_gene <- c("RAG1","ETV6","CDK6","GATA1","GATA2","TRIB2","TAL1","CD69","RUNX1","NFKB1D","CD5","CD34","CCR4","STAT5A","SIX6","CD84","GIMAP2","GIMAP6","GIMAP4","GIMAP5","GIMAP7","GIMAP8","STT3B","NOTCH3","KCNJ4","CD2","ETS" ,"IKZF3","RUNX3", "CCR9")# manualy added 
+manual_TAL_target <- unique(c(manual_TAL_target$V1,other_gene))
+
+
+# Check for the intersection
+# Get genes from chip reagion
+peak_Palii <- readPeakFile(paste0(WORKING_DIR,"/01_Data/GSE25000.bed")) #PALII
+peak_Sanda <- readPeakFile(paste0(WORKING_DIR,"/01_Data/GSE29180.bed")) # SANDA
+
+peakAnno_P <- annotatePeak(peak = peak_Palii, tssRegion = c(-3000,3000),annoDb="org.Hs.eg.db",TxDb = TxDb.Hsapiens.UCSC.hg38.knownGene)
+peakAnno_S <- annotatePeak(peak = peak_Sanda, tssRegion = c(-3000,3000),annoDb="org.Hs.eg.db",TxDb = TxDb.Hsapiens.UCSC.hg38.knownGene)
+
+
+Inter_P <- intersect(peakAnno_P@anno$SYMBOL,manual_TAL_target)
+Inter_S <-intersect(peakAnno_S@anno$SYMBOL,manual_TAL_target)
+
+length(unique(peakAnno_S@anno$SYMBOL))
+length(unique(peakAnno_P@anno$SYMBOL))
+
+## filtering 10kb
+Palii_10kb <- peakAnno_P@anno[abs(peakAnno_P@anno$distanceToTSS) < 10000,]
+length(unique(Palii_10kb$SYMBOL))
+
+Sanda_10kb <- peakAnno_S@anno[abs(peakAnno_S@anno$distanceToTSS) < 10000,]
+length(unique(Sanda_10kb$SYMBOL))
+ 
+
+Inter_P<- intersect(Palii_10kb$SYMBOL,manual_TAL_target)
+Inter_S <-intersect(Sanda_10kb$SYMBOL,manual_TAL_target)
+# We choose SANDA based on number of genes that stay in the intersection
+```
+
+Sanda subset
+```{r}
+# Add manual genes know as TAL1 target to the sanda list
+gene_Sanda_10kb <- unique(Sanda_10kb$SYMBOL)
+gene_Sanda_10kb_full <- c(gene_Sanda_10kb,manual_TAL_target)
+
+# subset to keep genes in our RNAseq matrix
+vec_reduit <- (gene_Sanda_10kb_full[gene_Sanda_10kb_full %in% rownames(mat_vst)])
+```
+
+# Fig sup5
+Heatmaps test of those genes with interseet variable gene from DGE
+plot papier figure sup 5
+Here it's significant differentialy expresed genes that are TAL target (at least identify on Chipdata from Sanda)
+
+```{r}
+# Load GROUP FROM SANDA Paper https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11063860/
+SANDA_A <- read.table(file = paste0(WORKING_DIR,"/01_Data/SANDA_GR_A.txt"),header = T)
+SANDA_B <- read.table(file = paste0(WORKING_DIR,"/01_Data/SANDA_GR_B.txt"),header = T)
+SANDA_C <- read.table(file = paste0(WORKING_DIR,"/01_Data/SANDA_GR_C.txt"),header = T)
+```
+
+```{r}
+res <- results(dds, contrast = c("condition", "Control", "TripleKo"))
+
+df_test <- as.data.frame(res)
+df_test$absfoldchange <- abs(df_test$log2FoldChange)
+
+df_test$Significant <- ifelse(df_test$padj < 0.05 & df_test$absfoldchange >1, "Significative","Not Significative")
+
+significant_gene <- rownames(na.omit(df_test[df_test$Significant == "Significative",]))
+#significant_table <- (na.omit(df_test[df_test$Significant == "Significative",]))
+
+
+## New heatmap with only highly variabel genes
+vsd <- vst(dds,blind = FALSE)
+mat_vst <- assay(vsd)
+
+gene_interest2 <- intersect(significant_gene,vec_reduit)
+
+mat_vst_sub <- mat_vst[gene_interest2,]
+
+scaled_mat = t(scale(t(mat_vst_sub))) # row centered matrix Z score
+#to automate scale
+hm_limit =c(min(scaled_mat),0, max(scaled_mat))
+
+column_order <- c("1D9","2G5","3B6","Jktbis","Jkt","D2bis")
+scaled_mat <- scaled_mat[, column_order]
+
+annotation_df <- colData
+annotation_df <- annotation_df[column_order, , drop = FALSE]
+column_annotation <- HeatmapAnnotation(
+  df = annotation_df,
+  col = list(condition = c("TripleKo" = "#B6322B","Control"="#A7D49B"))
+)
+
+set.seed(123) # for kmean reproducibility
+
+
+# Color gene name based on Sanda group list 
+# Define gene-specific colors
+
+genes_A <- as.character(SANDA_A[,1])
+genes_B <- as.character(SANDA_B[,1])
+genes_C <- as.character(SANDA_C[,1])
+
+gene_colors <- rep("black", nrow(scaled_mat))  # Default color for all genes
+names(gene_colors) <- rownames(scaled_mat)  # Assign names
+
+# Define specific colors for certain genes
+gene_colors[rownames(scaled_mat) %in% genes_A] <- "brown2"
+gene_colors[rownames(scaled_mat) %in% genes_B] <- "darkturquoise"
+gene_colors[rownames(scaled_mat) %in% genes_C] <- "goldenrod1"
+
+
+ComplexHeatmap::Heatmap(scaled_mat,show_column_names = T ,cluster_columns = F,cluster_rows = T,column_names_side = "top",top_annotation = column_annotation, column_split = annotation_df$condition,row_names_gp = gpar(fontsize = 6, col= gene_colors),row_split = 2)
+
+```
+
+```{r}
+#Plot for paper
+#ggsave not working on complex heatmap
+
+svg(paste0(WORKING_DIR,"/03_Output/Figures/Fig_sup5.svg"), width = 8, height = 20) #in inch
+plot(ComplexHeatmap::Heatmap(scaled_mat,show_column_names = T ,cluster_columns = F,cluster_rows = T,column_names_side = "top",top_annotation = column_annotation, column_split = annotation_df$condition,row_names_gp = gpar(fontsize = 10, col= gene_colors),row_split = 2))
+dev.off()
+
+```
+
+## Sanda
+Get other paper from Sanda
+Sanda : Regulatory mechanisms and context-dependent roles of TAL1 in T-cell acute lymphoblastic leukemia.
+Figure C, D 
+# Fig5 panel C
+## Volcano
+Identification of genes comming from Sanda group(A,B and C) with colors in the volcano.
+```{r}
+res <- results(dds, contrast = c("condition", "Control", "TripleKo"))
+df_test <- as.data.frame(res)
+df_test$absfoldchange <- abs(df_test$log2FoldChange)
+df_test$Significant <- ifelse(df_test$padj < 0.05 & df_test$absfoldchange >1, "Significative","Not Significative")
+df_test$genes <- rownames(df_test)
+
+# define axis size 
+plus_grande_valeur <- max(abs(min(na.omit(df_test$log2FoldChange))), abs(max(na.omit(df_test$log2FoldChange))))
+plus_grande_valeur<- ceiling(plus_grande_valeur) # arrondis a l'entier sup
+
+# subset GROUP SANDA
+test1 <- df_test[df_test$genes %in% SANDA_A$GROUPA,]
+test2 <- df_test[df_test$genes %in% SANDA_B$GroupB,]
+test3 <- df_test[df_test$genes %in% SANDA_C$GroupC,]
+
+ggplot(df_test, aes(x = log2FoldChange, y = -log10(padj))) +
+  geom_point(aes(color = Significant),size=0.5)+
+   scale_color_manual(values = c("azure3","#3A3A3A" ,"azure3")) +
+   theme_bw(base_size = 12) + theme(legend.position = "bottom")  +geom_vline(xintercept=c(-1, 1), col="black")+
+        geom_hline(yintercept=-log10(0.05), col="black")+
+  xlim(-plus_grande_valeur, plus_grande_valeur) + geom_point(data = test2, aes(x = log2FoldChange, y = -log10(padj)), color = "darkturquoise",size=2,alpha = 0.7)+ geom_point(data = test3, aes(x = log2FoldChange, y = -log10(padj)), color = "goldenrod1",size=2,alpha = 0.7)+ geom_point(data = test1, aes(x = log2FoldChange, y = -log10(padj)), color = "brown2",size=2,alpha = 0.7)
+```
+
+```{r}
+#save plot
+pdf(paste0(WORKING_DIR,"/03_Output/Figures/Fig_5C.pdf"), width = 7, height = 5)
+plot(ggplot(df_test, aes(x = log2FoldChange, y = -log10(padj))) +
+  geom_point(aes(color = Significant),size=0.5)+
+   scale_color_manual(values = c("azure3","#3A3A3A" ,"azure3")) +
+   theme_bw(base_size = 12) + theme(legend.position = "bottom")  +geom_vline(xintercept=c(-1, 1), col="black")+
+        geom_hline(yintercept=-log10(0.05), col="black")+
+  xlim(-plus_grande_valeur, plus_grande_valeur) + geom_point(data = test2, aes(x = log2FoldChange, y = -log10(padj)), color = "darkturquoise",size=2,alpha = 0.7)+ geom_point(data = test3, aes(x = log2FoldChange, y = -log10(padj)), color = "goldenrod1",size=2,alpha = 0.7)+ geom_point(data = test1, aes(x = log2FoldChange, y = -log10(padj)), color = "brown2",size=2,alpha = 0.7))
+dev.off()
+
+
+# svg
+svg(paste0(WORKING_DIR,"/03_Output/Figures/Fig_5C.svg"), width = 7, height = 5)
+plot(ggplot(df_test, aes(x = log2FoldChange, y = -log10(padj))) +
+  geom_point(aes(color = Significant),size=0.3)+
+   scale_color_manual(values = c("azure3","#3A3A3A" ,"azure3")) +
+   theme_bw(base_size = 12) + theme(legend.position = "bottom")  +geom_vline(xintercept=c(-1, 1), col="black")+
+        geom_hline(yintercept=-log10(0.05), col="black")+
+    ylim(0,90)+
+  xlim(-9, 9) + geom_point(data = test2, aes(x = log2FoldChange, y = -log10(padj)), color = "darkturquoise",size=1.5,alpha = 0.8)+ geom_point(data = test3, aes(x = log2FoldChange, y = -log10(padj)), color = "goldenrod1",size=1.5,alpha = 0.8)+ geom_point(data = test1, aes(x = log2FoldChange, y = -log10(padj)), color = "brown2",size=1.5,alpha = 0.8))
+dev.off()
+
+```
+
+## Enrichissement
+Are Genes comming from SANDA group A,B or C enriched in the gene differentially expressed between wt and triple KO ?
+```{r}
+gene_vec <- na.omit(df_test[df_test$Significant == "Significative",])$genes
+
+# Group A
+sanda_group <- intersect(SANDA_A$GROUPA,rownames(dds))
+overlapp <- intersect(sanda_group,significant_gene)
+total_gene<- rownames(dds)
+phyper(length(overlapp)-1,length(group2),length(total_gene)- length(group2),length(sanda_group),lower.tail = F)
+(length(overlapp)/length(sanda_group))/(length(group2)/length(total_gene))
+# Enrichment with good pvalue
+
+# Group B
+sanda_group <- intersect(SANDA_B$GroupB,rownames(dds))
+overlapp <- intersect(sanda_group,significant_gene)
+total_gene<- rownames(dds)
+phyper(length(overlapp)-1,length(group2),length(total_gene)- length(group2),length(sanda_group),lower.tail = F)
+(length(overlapp)/length(sanda_group))/(length(group2)/length(total_gene))
+# no enrichment
+
+# Group C
+sanda_group <- intersect(SANDA_C$GroupC,rownames(dds))
+overlapp <- intersect(sanda_group,significant_gene)
+total_gene<- rownames(dds)
+phyper(length(overlapp)-1,length(group2),length(total_gene)- length(group2),length(sanda_group),lower.tail = F)
+(length(overlapp)/length(sanda_group))/(length(group2)/length(total_gene))
+# Enrichment but with a non significative pvalue
+
+# enrichment calcul from gorilla
+#(intersection / SANDA) / (DGE/N)
+```
+
+
+#Fig 5 Pannel D
+Subset of the fig3 sup
+```{r}
+res <- results(dds, contrast = c("condition", "Control", "TripleKo"))
+
+df_test <- as.data.frame(res)
+df_test$absfoldchange <- abs(df_test$log2FoldChange)
+
+df_test$Significant <- ifelse(df_test$padj < 0.05 & df_test$absfoldchange >1, "Significative","Not Significative")
+
+significant_gene <- rownames(na.omit(df_test[df_test$Significant == "Significative",]))
+#significant_table <- (na.omit(df_test[df_test$Significant == "Significative",]))
+
+## New heatmap with only highly variabel genes
+vsd <- vst(dds,blind = FALSE)
+mat_vst <- assay(vsd)
+
+gene_vec <- c("CEBPE","SPINK2","CHRNA9","STAT5A","SIX6","SVOPL","CCR4","ANXA3","ERG","ADCYAP1","ABCB10","CD69","GIMAP6","GIMAP2","PTCRA","NOTCH3","KCNJ4","GRID1","CD2","CD5","GATA2","GIMAP4","KIT","TRIB2","CDKN1A") # list domie ca vient d'ou ? un racourci de la sup3 ? 
+
+vec_reduit <- gene_vec[gene_vec %in% rownames(mat_vst)]
+
+gene_interest2 <- intersect(significant_gene,vec_reduit)
+
+mat_vst_sub <- mat_vst[gene_interest2,]
+
+scaled_mat = t(scale(t(mat_vst_sub))) # row centered matrix Z score
+#to automate scale
+hm_limit =c(min(scaled_mat),0, max(scaled_mat))
+
+column_order <- c("1D9","2G5","3B6","Jktbis","Jkt","D2bis")
+scaled_mat <- scaled_mat[, column_order]
+
+annotation_df <- colData
+annotation_df <- annotation_df[column_order, , drop = FALSE]
+column_annotation <- HeatmapAnnotation(
+  df = annotation_df,
+  col = list(condition = c("TripleKo" = "#B6322B","Control"="#A7D49B"))
+)
+
+set.seed(123) # for kmean reproducibility
+
+# Color gene name based on Sanda group list 
+# Define gene-specific colors
+
+genes_A <- as.character(SANDA_A[,1])
+genes_B <- as.character(SANDA_B[,1])
+genes_C <- as.character(SANDA_C[,1])
+
+gene_colors <- rep("black", nrow(scaled_mat))  # Default color for all genes
+names(gene_colors) <- rownames(scaled_mat)  # Assign names
+
+# Define specific colors for certain genes
+gene_colors[rownames(scaled_mat) %in% genes_A] <- "brown2"
+gene_colors[rownames(scaled_mat) %in% genes_B] <- "darkturquoise"
+gene_colors[rownames(scaled_mat) %in% genes_C] <- "goldenrod1"
+
+
+ComplexHeatmap::Heatmap(scaled_mat,show_column_names = T ,cluster_columns = F,cluster_rows = T,column_names_side = "top",top_annotation = column_annotation, column_split = annotation_df$condition,row_names_gp = gpar(fontsize = 11,col = gene_colors),row_split = 2)
+
+```
+
+```{r}
+# save plot
+pdf(paste0(WORKING_DIR,"/03_Output/Figures/Fig_5D.pdf"), width = 6, height = 5)
+plot(ComplexHeatmap::Heatmap(scaled_mat,show_column_names = T ,cluster_columns = F,cluster_rows = T,column_names_side = "top",top_annotation = column_annotation, column_split = annotation_df$condition,row_names_gp = gpar(fontsize = 10,col = gene_colors),row_split = 2)
+)
+dev.off()
+
+```
+
+
+
+
+
+

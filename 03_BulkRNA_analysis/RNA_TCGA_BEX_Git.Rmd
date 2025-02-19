@@ -1,0 +1,1055 @@
+---
+title: "RNA_TCGA_BEX"
+author: "Mathis Nozais"
+output:
+  html_document:
+    code_folding: hide
+    code_download: true
+date: "2024-01-23"
+editor_options: 
+  chunk_output_type: console
+---
+
+#################
+
+Script for TCGA bulkRNAseq analysis for "BEX" paper.
+Made for Docker RNA 431
+
+#################
+
+
+```{r setup, include=FALSE}
+library(TCGAbiolinks)
+library(DESeq2)
+library(tidyverse) #load all tidyverse suite : ggplot2,dplyr...
+library(DT)
+library(ggthemes)
+library(paletteer)
+library(rtracklayer)
+library(corrplot)
+library(ComplexHeatmap)
+install.packages("colorRamp2")
+library(colorRamp2)s
+```
+
+```{r}
+# Set the variable to your working directory
+WORKING_DIR <- "/yourcomputer/BEX/03_BulkRNA_analysis" # should point to the github folder that you clone
+WORKING_DIR <- "/workspace/NASBioinfo/LALT/BIOINFO/BEX/GIT_TESTING/03_BulkRNA_analysis"  # to remove
+#  Path to the folder that will contain output objects
+OUTPUT_PATH <- (paste0(WORKING_DIR,"/03_Output/"))
+```
+
+We start by fetching TCGA TARGET data. This step can be skipped if you want to load our prepared matrix (see github).Move to the "Preparing obj" step
+# Fetching data
+
+## Target AML
+When I fetch the data for the first time I had an issue with duplicated samples, so I just remove them from the fetching code to correct this problem : 
+```{r}
+Proj = "TARGET-AML"
+query_mRNA_AML <- GDCquery(
+    project = Proj,
+    data.category = "Transcriptome Profiling",
+    data.type = "Gene Expression Quantification"
+  )
+
+
+#Issue with duplicated samples
+AML_sample_subset <- sample(query_mRNA_AML[[1]][[1]]$cases)
+
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARSAN-03A-01R"]
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PADYIR-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PADYIR-09A-01R"]
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PAECCE-09A-01R"]
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PAECCE-09A-01R"]
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PAEERJ-09A-01R"]
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PAEERJ-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PAKIWK-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PAKIWK-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PAKVGI-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PAKVGI-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PAPXRJ-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PAPXRJ-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARDDY-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARDDY-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARFAL-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARFAL-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARIMT-03A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARIMT-03A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARJCR-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARJCR-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARPDS-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARPDS-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARSAN-03A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARSAN-03A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARTAL-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARTAL-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARUBT-40A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARUBT-40A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARUNX-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARUNX-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARYFN-03A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARYFN-03A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARYFN-04A-01R"]
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARYFN-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARYVW-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PARYVW-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASBHI-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASBHI-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASCRZ-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASCRZ-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASGZS-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASGZS-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASHBI-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASHBI-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASHYZ-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASHYZ-04A-01R"]
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASIBG-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASIBG-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASJGZ-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASJGZ-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASJTM-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASJTM-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASLSD-03A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASLSD-03A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASMGW-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASMGW-09A-01R"]
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASTTW-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASTTW-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASTUH-03A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASTUH-03A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASTUH-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASTUH-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASVVS-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASVVS-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASVYA-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASVYA-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASVYA-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASVYA-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASVYL-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASVYL-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASWAT-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASWAT-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASWLN-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASWLN-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASXNR-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PASXNR-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PATDHA-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PATDHA-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PATIAK-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PATIAK-04A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PATIAK-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PATIAK-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PATJHJ-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PATJHJ-09A-01R"] 
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PATJHJ-40A-01R"]
+AML_sample_subset <- AML_sample_subset[!AML_sample_subset== "TARGET-20-PATJHJ-40A-01R"]
+```
+
+
+```{r}
+#https://portal.gdc.cancer.gov/repository?facetTab=cases&filters=%7B"op"%3A"and"%2C"content"%3A%5B%7B"op"%3A"in"%2C"content"%3A%7B"field"%3A"cases.project.project_id"%2C"value"%3A%5B"TARGET-AML"%5D%7D%7D%2C%7B"op"%3A"in"%2C"content"%3A%7B"field"%3A"files.access"%2C"value"%3A%5B"open"%5D%7D%7D%2C%7B"op"%3A"in"%2C"content"%3A%7B"field"%3A"files.data_type"%2C"value"%3A%5B"Gene%20Expression%20Quantification"%5D%7D%7D%2C%7B"op"%3A"in"%2C"content"%3A%7B"field"%3A"files.experimental_strategy"%2C"value"%3A%5B"RNA-Seq"%5D%7D%7D%5D%7D&searchTableTab=cases
+# 3225 files for 2281 AML
+
+##### Transcriptomic raw count data AML. ######
+Proj = "TARGET-AML"
+query_mRNA_AML <- GDCquery(
+    project = Proj,
+    data.category = "Transcriptome Profiling",
+    data.type = "Gene Expression Quantification",
+    barcode= AML_sample_subset
+  ) # subset to only non duplicated barcode to avoid the error
+
+GDCdownload(query_mRNA_AML,directory = paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-AML/"))
+expdat_mRNA_AML <- GDCprepare(query = query_mRNA_AML,directory = paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-AML/")) # Preparation of matrix
+
+
+###### CLINICAL DATA ######
+#FAB Category
+# We are not interested in all AML the same way, having all subtype is of interest but not the 2000 we'll enrich in M0 as they are closer to ALAL and ETP
+query_clinical_AML <- GDCquery(
+    project = Proj,
+    data.category = "Clinical"
+)
+GDCdownload(query_clinical_AML,directory = paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-AML/"))
+
+#Files are a mess, will combine all of them and just use the line corresponding to the sample I got
+Target_clinical_AML1 <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-AML/Clinical/Clinical_Supplement/3bf97830-865d-4e66-aaf1-d5bac81f119a/TARGET_AML_ClinicalData_Discovery_20230720.xlsx")))
+Target_clinical_AML1 <- Target_clinical_AML1[,c("TARGET USI","FAB Category")] #subsetting the df
+
+Target_clinical_AML2 <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-AML/Clinical/Clinical_Supplement/5f8b7137-c1e1-4191-aee5-a5ea55d32ca7/TARGET_AML_ClinicalData_Validation_20230720.xlsx")))
+Target_clinical_AML2 <- Target_clinical_AML2[,c("TARGET USI","FAB Category")] #subsetting the df
+
+Target_clinical_AML3 <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-AML/Clinical/Clinical_Supplement/129e5399-6892-4cb7-99a8-1406309a2e4d/TARGET_AML_ClinicalData_LowDepthRNAseq_20230720.xlsx")))
+Target_clinical_AML3 <- Target_clinical_AML3[,c("TARGET USI","FAB Category")] #subsetting the df
+
+Target_clinical_AML4 <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-AML/Clinical/Clinical_Supplement/727dbb38-32fc-4444-9db2-13c8eb427fa2/TARGET_AML_ClinicalData_AAML1031_AAML0631_additionalCasesForSortedCellsAndCBExperiment_20230720.xlsx")))
+Target_clinical_AML4 <- Target_clinical_AML4[,c("TARGET USI","FAB Category")] #subsetting the df
+
+Target_clinical_AML5 <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-AML/Clinical/Clinical_Supplement/68170d63-c297-4d93-a21b-7bb43b451a96/TARGET_AML_ClinicalData_AML1031_20230720.xlsx")))
+Target_clinical_AML5 <- Target_clinical_AML5[,c("TARGET USI","FAB Category")] #subsetting the df
+
+Target_clinical_AML <- bind_rows(Target_clinical_AML1, Target_clinical_AML2,Target_clinical_AML3,Target_clinical_AML4,Target_clinical_AML5) %>% distinct(`TARGET USI`, .keep_all = T) #To remove TARGET USI duplicates
+#Getting 2144 patient so close to what TCGA internet told us.
+
+patientID_keep <-intersect(Target_clinical_AML$`TARGET USI`,expdat_mRNA_AML$patient) # 1930 cases with RNA and clinical info
+
+Target_clinical_AML<- Target_clinical_AML[Target_clinical_AML$`TARGET USI` %in% patientID_keep,]
+table(Target_clinical_AML$`FAB Category`) #We don't need all those AML will downsample but need to keep all M0
+
+Target_clinical_AML<- Target_clinical_AML[Target_clinical_AML$`FAB Category` != "Unknown",] # removing unknown..
+Target_clinical_AML<- Target_clinical_AML[Target_clinical_AML$`FAB Category` != "Not classified",] # removing not classifed 
+
+samples_per_group <- 30
+# This function will take a maximum of x patient and if less will take all
+subsample <- Target_clinical_AML %>%
+  group_by(`FAB Category`) %>%
+  slice(sample(n(), min(samples_per_group, n()))) %>%
+  ungroup()
+
+table(subsample$`FAB Category`)
+
+
+##################
+
+#Prepare for DESEQ2
+assayNames(expdat_mRNA_AML)
+raw_counts <- assays(expdat_mRNA_AML)[["unstranded"]] # to be sure to select raw count
+
+exp_RNA <- assay(expdat_mRNA_AML) # To get count matrix
+#rename with patient ID
+colnames(exp_RNA) <- expdat_mRNA_AML$patient
+
+
+subsample <- subsample %>% distinct(`TARGET USI`, .keep_all=TRUE)
+sampl_info_AML <- as.data.frame(subsample)
+sampl_info_AML <- na.omit(sampl_info_AML)
+rownames(sampl_info_AML) <- sampl_info_AML$`TARGET USI`
+colnames(sampl_info_AML) <- c("TARGET_USI","Classification")
+
+#susbet RNA matrix with only patient ID
+exp_RNA_AML<- exp_RNA[,rownames(sampl_info)] 
+
+saveRDS(exp_RNA_AML, file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_AML.rds"))
+saveRDS(sampl_info_AML, file = paste0(WORKING_DIR,"/01_Data/Object/clinial_matrix_TARGET_AML.rds"))
+```
+
+## Target P2
+```{r}
+# TARGET P2
+##### Transcriptomic raw count data P2. ######
+Proj = "TARGET-ALL-P2"
+query_mRNA_P2 <- GDCquery(
+    project = Proj,
+    data.category = "Transcriptome Profiling",
+    data.type = "Gene Expression Quantification"
+  )
+GDCdownload(query_mRNA_P2,directory = paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P2/"))
+expdat_mRNA_P2 <- GDCprepare(query = query_mRNA_P2,directory = paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P2/")) # Preparation of matrix
+
+datatable(
+    as.data.frame(colData(expdat_mRNA_P2)), 
+    options = list(scrollX = TRUE, keys = TRUE, pageLength = 5), 
+    rownames = FALSE
+)
+
+rowRanges(expdat_mRNA_P2)
+
+
+###### CLINICAL DATA ######
+# Get primary diagnosis ID
+
+query_clinical_P2 <- GDCquery(
+    project = Proj,
+    data.category = "Clinical"
+  )
+GDCdownload(query_clinical_P2,directory = paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P2/"))
+
+#Files are a mess, will combine all of them and just use the line corresponding to the sample I got
+P2_Target_clinical_ALL1 <-readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P2/Clinical/Clinical_Supplement/304aefc8-6a70-4896-9f54-2605d7e15630/TARGET_ALL_ClinicalData_Phase_I_20230727.xlsx")))
+P2_Target_clinical_ALL2 <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P2/Clinical/Clinical_Supplement/19889559-1020-4fe3-b81e-b2eaa3f5b16c/TARGET_ALL_ClinicalData_Phase_II_Discovery_20230727.xlsx")))
+P2_Target_clinical_ALL3 <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P2/Clinical/Clinical_Supplement/64174210-4250-47b6-a99c-28fae719ab8d/TARGET_ALL_ClinicalData_Dicentric_20230727.xlsx")))
+P2_Target_clinical_ALL4 <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P2/Clinical/Clinical_Supplement/c6a63e40-f4e5-4002-9b87-3e6f3b3dfab4/TARGET_ALL_ClinicalData_Phase_II_Validation_20230727.xlsx")))# with B-ALL and T-ALL
+
+P2_Target_clinical_ALL <- bind_rows(P2_Target_clinical_ALL1, P2_Target_clinical_ALL2,P2_Target_clinical_ALL3,P2_Target_clinical_ALL4) %>% distinct(`TARGET USI`, .keep_all = T) #To remove TARGET USI duplicates
+
+# online : 
+#https://portal.gdc.cancer.gov/repository?facetTab=files&filters=%7B"op"%3A"and"%2C"content"%3A%5B%7B"content"%3A%7B"field"%3A"cases.project.project_id"%2C"value"%3A%5B"TARGET-ALL-P2"%5D%7D%2C"op"%3A"in"%7D%2C%7B"op"%3A"in"%2C"content"%3A%7B"field"%3A"files.data_type"%2C"value"%3A%5B"Gene%20Expression%20Quantification"%5D%7D%7D%2C%7B"content"%3A%7B"field"%3A"files.experimental_strategy"%2C"value"%3A%5B"RNA-Seq"%5D%7D%2C"op"%3A"in"%7D%5D%7D&searchTableTab=cases
+#In P2 and experimental strategy is RNA-seq and data type is Gene expression quantification 
+# Online TCGA told us we are supposed to have 532 files and 469 cases
+
+patientID_keep <-intersect(P2_Target_clinical_ALL$`TARGET USI`,expdat_mRNA_P2$patient) # 469 cases so it's a perfect match 
+
+
+# Get subgroup of T-ALL
+# Loading the subgroup classification file
+P2_Target_clinical_TALL <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P2/Clinical/Clinical_Supplement/206f7eec-326e-4fcd-b244-338a522ff384/TARGET_ALL_ClinicalData_Validation_Supplement_20230727.xlsx")))
+P2_Target_clinical_TALL <- P2_Target_clinical_TALL[,c("TARGET USI","Group")] #subsetting the df
+
+##################
+
+#Create a experimental design for DESEQ2
+exp_RNA <- assay(expdat_mRNA_P2) # To get count matrix
+#rename with patient ID
+colnames(exp_RNA) <- expdat_mRNA_P2$patient
+
+sampl_info <- P2_Target_clinical_ALL[,c("TARGET USI","Cell of Origin")] #subset df
+
+sampl_info <- sampl_info[sampl_info$`TARGET USI` %in% patientID_keep,] #reduce size to keep only ID with RNA infos
+
+# For T-ALL patient removing from sample info P2 patient with unknow T-ALL subgroup patient
+unique(P2_Target_clinical_TALL$Group)
+Unk <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "Unknown",]$`TARGET USI`
+P2_Target_clinical_TALL <- P2_Target_clinical_TALL[ ! P2_Target_clinical_TALL$`TARGET USI` %in% Unk, ]
+Unk <- P2_Target_clinical_TALL[which(is.na(P2_Target_clinical_TALL$Group)),]$`TARGET USI` # Get NA patient
+P2_Target_clinical_TALL <- P2_Target_clinical_TALL[ ! P2_Target_clinical_TALL$`TARGET USI` %in% Unk, ]
+
+ID_TALL_detailed <-P2_Target_clinical_TALL$`TARGET USI` # list of patient with T-ALL classification
+ID_TALL_all <- sampl_info[sampl_info$`Cell of Origin` == "T Cell ALL",]$`TARGET USI` # ALl T-ALL patient
+patient_remove <- setdiff(ID_TALL_all,ID_TALL_detailed)
+
+sampl_info <- sampl_info[ ! sampl_info$`TARGET USI` %in% patient_remove, ]
+sampl_info_P2 <- as.data.frame(sampl_info)
+rownames(sampl_info_P2) <- sampl_info_P2$`TARGET USI`
+colnames(sampl_info_P2) <- c("TARGET_USI","Classification")
+
+patientID_keep <-intersect(sampl_info_P2$`TARGET_USI`,expdat_mRNA_P2$patient) # 469 cases so it's a perfect match 
+
+#susbet RNA matrix with only patient ID
+exp_RNA_P2 <- exp_RNA[,patientID_keep]
+saveRDS(exp_RNA_P2, file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_P2.rds"))
+saveRDS(sampl_info_P2, file = paste0(WORKING_DIR,"/01_Data/Object/clinial_matrix_TARGET_P2.rds"))
+```
+
+
+## Target P3
+```{r}
+# online : 
+#https://portal.gdc.cancer.gov/repository?facetTab=files&filters=%7B"op"%3A"and"%2C"content"%3A%5B%7B"content"%3A%7B"field"%3A"cases.project.project_id"%2C"value"%3A%5B"TARGET-ALL-P3"%5D%7D%2C"op"%3A"in"%7D%2C%7B"op"%3A"in"%2C"content"%3A%7B"field"%3A"files.data_type"%2C"value"%3A%5B"Gene%20Expression%20Quantification"%5D%7D%7D%2C%7B"content"%3A%7B"field"%3A"files.experimental_strategy"%2C"value"%3A%5B"RNA-Seq"%5D%7D%2C"op"%3A"in"%7D%5D%7D&searchTableTab=cases
+#In P3 and experimental strategy is RNA-seq and data type is Gene expression quantification 
+# Online TCGA told us we are supposed to have 135 files and 110 cases
+
+##### Transcriptomic raw count data P3 ######
+Proj = "TARGET-ALL-P3"
+query_mRNA_P3 <- GDCquery(
+    project = Proj,
+    data.category = "Transcriptome Profiling",
+    data.type = "Gene Expression Quantification"
+  )
+GDCdownload(query_mRNA_P3,directory = paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P3/"))
+expdat_mRNA_P3 <- GDCprepare(query = query_mRNA_P3, directory =paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P3/")) # Preparation of matrix
+
+###### CLINICAL DATA ######
+# Get primary diagnosis ID
+
+query_clinical_P3 <- GDCquery(
+    project = Proj,
+    data.category = "Clinical"
+  )
+GDCdownload(query_clinical_P3,directory = paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P3/"))
+
+P3_Target_clinical_ALAL <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P3/Clinical/Clinical_Supplement/d475576c-eac8-4f24-bfc7-67797b02b109/TARGET_ALL_ClinicalData_Phase_III_20230725.xlsx")))
+
+P3_Target_clinical_ALAL$`WHO ALAL Classification`
+
+patientID_keep <-intersect(P3_Target_clinical_ALAL$`TARGET USI`,expdat_mRNA_P3$patient) # 92 cases we loose some cases compare to internet info
+P3_Target_clinical_ALAL<- P3_Target_clinical_ALAL[,c("TARGET USI","WHO ALAL Classification")] #subsetting the df
+P3_Target_clinical_ALAL<- P3_Target_clinical_ALAL[P3_Target_clinical_ALAL$`TARGET USI` %in% patientID_keep,]
+##################
+
+#Prepare for DESEQ2
+exp_RNA <- assay(expdat_mRNA_P3) # To get count matrix
+#rename with patient ID
+colnames(exp_RNA) <- expdat_mRNA_P3$patient
+
+
+sampl_info_P3 <- as.data.frame(P3_Target_clinical_ALAL)
+rownames(sampl_info_P3) <- sampl_info_P3$`TARGET USI`
+colnames(sampl_info_P3) <- c("TARGET_USI","Classification")
+
+#susbet RNA matrix with only patient ID
+exp_RNA_P3<- exp_RNA[,rownames(sampl_info_P3)]
+
+saveRDS(exp_RNA_P3, file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_P3.rds"))
+saveRDS(sampl_info_P3, ffile = paste0(WORKING_DIR,"/01_Data/Object/clinial_matrix_TARGET_P3.rds"))
+```
+
+# Preparing obj
+Preparing the matrices
+
+## load TCGA data
+```{r}
+clinial_matrix_TARGET_AML <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/clinial_matrix_TARGET_AML.rds"))
+clinial_matrix_TARGET_P2  <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/clinial_matrix_TARGET_P2.rds"))
+clinial_matrix_TARGET_P3  <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/clinial_matrix_TARGET_P3.rds"))
+
+RNA_matrix_TARGET_AML  <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_AML.rds"))
+RNA_matrix_TARGET_P2  <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_P2.rds"))
+RNA_matrix_TARGET_P3  <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_P3.rds"))
+```
+
+## Prepare data
+```{r}
+#Binding all dataset
+clinical_matrix_TARGET <- rbind(clinial_matrix_TARGET_AML,clinial_matrix_TARGET_P2,clinial_matrix_TARGET_P3)
+RNA_matrix_TARGET <- cbind(RNA_matrix_TARGET_AML,RNA_matrix_TARGET_P2,RNA_matrix_TARGET_P3)
+
+# metadata organisation
+unique(clinical_matrix_TARGET$Classification)
+# The classification column is detailed for AML but not for T and B.. I need to sort this into different columns
+colnames(clinical_matrix_TARGET) <- c("TARGET_USI","detailed_class")
+clinical_matrix_TARGET$simple_class <- clinical_matrix_TARGET$detailed_class
+unique(clinical_matrix_TARGET$simple_class)
+
+clinical_matrix_TARGET <- within(clinical_matrix_TARGET,simple_class[detailed_class %in% c("M0 Undifferentiated","M1","M2","M3","M4","M5","M6","M7")] <- "AML")
+clinical_matrix_TARGET <- within(clinical_matrix_TARGET,simple_class[detailed_class %in% c("B-Precursor")] <- "B-ALL")
+clinical_matrix_TARGET <- within(clinical_matrix_TARGET,simple_class[detailed_class %in% c("T Cell ALL")] <- "T-ALL")
+clinical_matrix_TARGET <- within(clinical_matrix_TARGET,simple_class[detailed_class %in% c("T/M","B/M","NOS (T/B/M)","AUL","NOS (T/B)","MLL")] <- "ALAL")
+
+#Some category I don"t need and filter out
+sum(clinical_matrix_TARGET$simple_class == "Ph+", na.rm = TRUE)
+sum(clinical_matrix_TARGET$simple_class == "B precursor (Non-T, Non-B ALL)", na.rm = TRUE)
+clinical_matrix_TARGET <- clinical_matrix_TARGET[clinical_matrix_TARGET$simple_class != "Ph+",]
+clinical_matrix_TARGET <- clinical_matrix_TARGET[clinical_matrix_TARGET$simple_class != "B precursor (Non-T, Non-B ALL)",]
+
+# Get subgroup of T-ALL
+# Loading the subgroup classification file
+P2_Target_clinical_TALL <- readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P2/Clinical/Clinical_Supplement/206f7eec-326e-4fcd-b244-338a522ff384/TARGET_ALL_ClinicalData_Validation_Supplement_20230727.xlsx")))
+P2_Target_clinical_TALL <- P2_Target_clinical_TALL[,c("TARGET USI","Group","ETP status")] #subsetting the df
+
+# For T-ALL patient removing from sample info P2 patient with unknow T-ALL subgroup patient
+unique(P2_Target_clinical_TALL$Group)
+Unk <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "Unknown",]$`TARGET USI`
+P2_Target_clinical_TALL <- P2_Target_clinical_TALL[ ! P2_Target_clinical_TALL$`TARGET USI` %in% Unk, ]
+Unk <- P2_Target_clinical_TALL[which(is.na(P2_Target_clinical_TALL$Group)),]$`TARGET USI` # Get NA patient
+P2_Target_clinical_TALL <- P2_Target_clinical_TALL[ ! P2_Target_clinical_TALL$`TARGET USI` %in% Unk, ]
+
+tal1<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TAL1",]$`TARGET USI` # all ID for TAL1 patient
+tal2<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TAL2",]$`TARGET USI` 
+tal3<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "LMO1/2",]$`TARGET USI` 
+NKX1<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "NKX2_1",]$`TARGET USI`
+LYL <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "LMO2_LYL1",]$`TARGET USI` 
+HOXA <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "HOXA",]$`TARGET USI` 
+TLX1 <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TLX1",]$`TARGET USI` 
+TLX3 <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TLX3",]$`TARGET USI`
+
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% tal1,]$detailed_class <- "TAL/LMO"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% tal2,]$detailed_class <- "TAL/LMO"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% tal3,]$detailed_class <- "TAL/LMO"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% NKX1,]$detailed_class <- "TLX"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% LYL,]$detailed_class <- "LYL/LMO"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% HOXA,]$detailed_class <- "HOXA"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% TLX1,]$detailed_class <- "TLX"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% TLX3,]$detailed_class <- "TLX"
+
+unique(clinical_matrix_TARGET$detailed_class)
+
+
+### add ultra detailed t-ALL
+clinical_matrix_TARGET$ultra_detailed <- "Other"
+tal1<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TAL1",]$`TARGET USI` # all ID for TAL1 patient
+tal2<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TAL2",]$`TARGET USI` 
+LMO<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "LMO1/2",]$`TARGET USI` 
+NKX1<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "NKX2_1",]$`TARGET USI`
+LMO_LYL <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "LMO2_LYL1",]$`TARGET USI` 
+HOXA <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "HOXA",]$`TARGET USI` 
+TLX1 <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TLX1",]$`TARGET USI` 
+TLX3 <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TLX3",]$`TARGET USI`
+
+
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% tal1,]$ultra_detailed <- "TAL1"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% tal2,]$ultra_detailed <- "TAL2"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% LMO,]$ultra_detailed <- "LMO1/2"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% NKX1,]$ultra_detailed <- "NKX2_1"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% LMO_LYL,]$ultra_detailed <- "LMO2_LYL1"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% HOXA,]$ultra_detailed <- "HOXA"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% TLX1,]$ultra_detailed <- "TLX1"
+clinical_matrix_TARGET[clinical_matrix_TARGET$TARGET_USI %in% TLX3,]$ultra_detailed <- "TLX3"
+#######
+
+
+#subset RNA matrix to match clinical ID 
+patientID_keep <-intersect(clinical_matrix_TARGET$TARGET_USI,colnames(RNA_matrix_TARGET)) 
+RNA_matrix_TARGET<- RNA_matrix_TARGET[,patientID_keep]
+
+saveRDS(clinical_matrix_TARGET, file = paste0(WORKING_DIR,"/01_Data/Object/clinical_matrix_TARGET_AL.rds"))
+saveRDS(RNA_matrix_TARGET, file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_AL.rds"))
+```
+
+
+# T-ALL analysis (Figure 3)
+You can skip steps and directly load the matrice used for T-ALL
+```{r}
+clinical_matrix_TARGET  <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/clinical_matrix_TARGET_AL.rds"))
+RNA_matrix_TARGET  <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_AL.rds"))
+
+all(rownames(clinical_matrix_TARGET) == colnames(RNA_matrix_TARGET)) #they are all in the same order of patient
+
+## Subset on T-ALL for DGE
+ID_TALL <-clinical_matrix_TARGET[clinical_matrix_TARGET$simple_class == "T-ALL",]$`TARGET_USI`
+
+clinical_matrix_TARGET_TALL <- clinical_matrix_TARGET[clinical_matrix_TARGET$`TARGET_USI` %in% ID_TALL, ]
+RNA_matrix_TARGET_TALL <- RNA_matrix_TARGET[,ID_TALL]
+```
+
+### Convert ID
+```{r}
+# https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/ to convert geneID using TCGA gtf
+#GENCODE v36 gtf https://gdc.cancer.gov/about-data/gdc-data-processing/gdc-reference-files
+gtf.gr = rtracklayer::import(paste0(WORKING_DIR,"/01_Data/gencode.v36.annotation.gtf")) 
+gtf.df = as.data.frame(gtf.gr)
+
+gtf.df <- gtf.df[gtf.df$type == "gene",]
+gtf.df <- gtf.df[gtf.df$gene_type == "protein_coding",] #keeping only protein coding Gene
+
+#Looking at duplicates
+n_occur <- data.frame(table(gtf.df$gene_name))
+temp <- n_occur[n_occur$Freq > 1,]
+
+#Modification to add their Ensmbl ID
+tmp <- gtf.df[gtf.df$gene_name %in% temp$Var1,]
+tmp <- tmp[,c("gene_id","gene_name")] #subsetting the df
+tmp$gene_name <- paste(tmp$gene_id,tmp$gene_name,sep="_")
+
+gtf.df[gtf.df$gene_id %in% tmp$gene_id,]$gene_name <- tmp$gene_name
+
+genes = (gtf.df[ ,c("gene_id","gene_name")])
+
+length(unique(genes$gene_id))# so all ensembl ID are unique at this step
+
+genes <- genes[order(genes$gene_id),]
+
+
+## Subset RNA matrix to keep only protein coding genes
+RNA_matrix_TARGET_TALL <- RNA_matrix_TARGET_TALL[rownames(RNA_matrix_TARGET_TALL) %in% genes$gene_id, ]
+
+tmp<- intersect(genes$gene_id,rownames(RNA_matrix_TARGET_TALL))
+tmp <- genes[genes$gene_id %in% tmp,]#subset gene to match the genes in my df if needed
+
+all(tmp$gene_id == rownames(RNA_matrix_TARGET_TALL)) #they are all in the same order of genes
+
+
+rownames(RNA_matrix_TARGET_TALL) <- tmp$gene_name #rename 
+
+saveRDS(RNA_matrix_TARGET_TALL, file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_TALL_convert.rds"))
+saveRDS(clinical_matrix_TARGET_TALL, file = paste0(WORKING_DIR,"/01_Data/Object/Clinical_matrix_TARGET_TALL_convert.rds"))
+```
+
+### load T-ALL final matrix
+```{r}
+clinical_matrix_TARGET_TALL <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/Clinical_matrix_TARGET_TALL_convert.rds"))
+RNA_matrix_TARGET_TALL <- readRDS(paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_TALL_convert.rds"))
+
+table(clinical_matrix_TARGET_TALL$detailed_class)
+```
+
+## DGE
+```{r}
+#testing
+TARGET_DESeqTALL <- DESeqDataSetFromMatrix(countData=RNA_matrix_TARGET_TALL, 
+                              colData=clinical_matrix_TARGET_TALL, 
+                              design= ~ detailed_class)
+
+TARGET_DESeqTALL <- DESeq(TARGET_DESeqTALL)
+```
+
+### visu
+```{r}
+# PCA
+#First we need to transform the raw count data
+#vst function will perform variance stabilizing transformation
+vsdataTALL <- vst(TARGET_DESeqTALL, blind=FALSE) 
+p <- plotPCA(vsdataTALL, intgroup="detailed_class",pcsToUse =1:2) 
+
+#### PCA PLOT on variable genes####
+## Gene variable
+var_genes <- apply(assay(vsdataTALL),1,var)
+var_genes <- sort(var_genes, decreasing = T)
+# select top x
+top_var_genes = names(sort(var_genes,decreasing = T)[1:1000])
+#top_var_genes <- var_genes[1:500]
+highly_variable_vsdataTALL <- vsdataTALL[top_var_genes,]
+
+tmp <- prcomp(assay(highly_variable_vsdataTALL))
+pca_data <- as.data.frame(tmp$rotation[, 1:2])
+pca_data$group <- p$data$group
+
+#plot with border 
+ggplot(pca_data, aes (x=pca_data$PC1, y =pca_data$PC2, color = pca_data$group,fill=  pca_data$group )) + geom_point(size=3, shape=21,stroke=1)+ theme_void() + scale_color_manual(values = c("#7A913B","#454EB0","#58222C","#D0804E")) + scale_fill_manual(values =c("#9BB655FF","#6C74C6","#803342FF","#D89873FF"))
+
+```
+
+```{r}
+#save plot
+#Figure 3 panel A
+image <- ggplot(pca_data, aes (x=pca_data$PC1, y =pca_data$PC2, color = pca_data$group,fill=  pca_data$group )) + geom_point(size=3, shape=21,stroke=1)+ theme_void() + scale_color_manual(values = c("#7A913B","#454EB0","#58222C","#D0804E")) + scale_fill_manual(values =c("#9BB655FF","#6C74C6","#803342FF","#D89873FF"))
+
+#This actually save the plot in a image
+ggsave(file="/workspace/userDUPREZ/Equipes_PF_Services/EQ_Duprez/EQ_Duprez/LAL-T/7_Papier/Papier BEX/octobre24/Blood adv/revision janvier 2025/Figure_HQ/Fig3_A.svg", plot=image, width=2500, height=1500,units = "px",dpi = 320, device = "svg")
+
+```
+
+
+### heatmap
+```{r}
+mat_vst <- assay(vsdataTALL)
+gene_vec <- c("HOXA10","HOXA9","HOXA5","MEIS1","HOXB5","NKX2-3","LMO2","LYL1","NKX2-1","TLX1","TLX3","TAL1","BCL11B","RUNX1","TAL2","LMO1","BEX1","BEX2","BEX5")
+
+
+mat_vst_sub <- mat_vst[gene_vec,]
+scaled_mat = t(scale(t(mat_vst_sub))) # row centered matrix
+
+hm_colors = c("dodgerblue1","white","red2")
+#to automate scale
+hm_limit =c(min(scaled_mat),0, max(scaled_mat))
+
+
+# sorting sample to appear group together and in stage of arrest order nin TALL
+# Définir l'ordre personnalisé
+personalized_order <- c("HOXA", "LYL/LMO", "TLX","TAL/LMO")
+
+# specify the order 
+clinical_matrix_TARGET_TALL$detailed_class <- factor(clinical_matrix_TARGET_TALL$detailed_class , levels =personalized_order )
+
+# Trier le dataframe en fonction de la colonne 'Nom'
+sort_clinical <- clinical_matrix_TARGET_TALL[order(clinical_matrix_TARGET_TALL$detailed_class), ]
+
+all(sort_clinical$TARGET_USI == colnames(scaled_mat))
+#need to re order RNA
+scaled_mat_order <- scaled_mat[, match(sort_clinical$TARGET_USI, colnames(scaled_mat))]
+all(sort_clinical$TARGET_USI == colnames(scaled_mat_order)) # now it's ok
+
+ann <-data.frame(sort_clinical$detailed_class)
+cond_detail <- unique(ann$sort_clinical.detailed_class)
+
+# Choisir une palette de couleurs de paletteer
+
+#palette <- as.character(paletteer::paletteer_d("beyonce::X39", n = length(cond_detail)))
+palette <- c("#9BB655FF","#6C74C6","#D89873FF","#803342FF")
+
+# Créer une liste avec les associations condition-couleur
+color_list <- list()
+names(palette) <- cond_detail
+color_list <- append(color_list,list('sort_clinical.detailed_class' = palette))
+
+  
+colAnn <- HeatmapAnnotation(df = ann,
+which = 'col',
+col = color_list,
+annotation_width = unit(c(1, 4), 'cm'),
+gap = unit(1, 'mm'),
+annotation_label = "Clinical classification")
+
+#manually slicing
+row_split = rep("group1", 19)
+row_split[7:8] = "group2"
+row_split[9:11] = "group3"
+row_split[12:16] = "group4"
+row_split[17:19] = "group5"
+
+set.seed(123) # for kmean reproducibility
+ComplexHeatmap::Heatmap(scaled_mat_order,show_column_names = FALSE ,cluster_columns = F,row_order = gene_vec, top_annotation = colAnn,col = colorRamp2(hm_limit,hm_colors), column_split = ann$sort_clinical.detailed_class ,show_row_dend = F, heatmap_legend_param = list(title="r norm", direction="vertical"),column_gap =unit(2, "mm"),row_split = row_split,,row_gap = unit(c(2,2,2,6), "mm"))
+```
+
+```{r}
+#save plot
+#ggsave not working on complex heatmap
+
+svg("/workspace/userDUPREZ/Equipes_PF_Services/EQ_Duprez/EQ_Duprez/LAL-T/7_Papier/Papier BEX/octobre24/Blood adv/revision janvier 2025/Figure_HQ/Fig3_B.svg", width = 9, height = 5) #in inch
+plot(ComplexHeatmap::Heatmap(scaled_mat_order,show_column_names = FALSE ,cluster_columns = F,row_order = gene_vec, top_annotation = colAnn,col = colorRamp2(hm_limit,hm_colors), column_split = ann$sort_clinical.detailed_class ,show_row_dend = F, heatmap_legend_param = list(title="r norm", direction="vertical"),column_gap =unit(2, "mm"),row_split = row_split,row_gap = unit(c(2,2,2,6), "mm"),row_names_gp = gpar(fontsize = 9)))
+dev.off()
+```
+
+### Boxplot bex T-ALL subgroup
+```{r}
+counts <- as.data.frame(assay(vsdataTALL)[c('BEX1','BEX2','BEX5'),])
+
+counts <- data.frame(t(counts), check.rows = F)
+all(rownames(counts)== clinical_matrix_TARGET_TALL$TARGET_USI)
+counts$class <- clinical_matrix_TARGET_TALL$detailed_class
+
+df_long <- tidyr::gather(counts, key = "gene", value = "expression", -class)
+
+
+ordre_classes <- c("HOXA", "LYL/LMO", "TLX", "TAL/LMO")
+df_long$class <- factor(df_long$class, levels = ordre_classes)
+
+ggplot(df_long, aes(x = gene, y = expression, fill = class)) +
+  geom_boxplot(position = position_dodge(width = 0.8))+
+  labs(title = "Boxplot des expressions géniques par condition",
+       x = "Gène",
+       y = "Expression") +
+  theme_minimal()+ scale_fill_manual(values=c("#9BB655FF","#6C74C6","#D89873FF","#803342FF"))
+
+
+
+# TAL vs all to calculate pvalue
+# adding a desing
+TARGET_DESeqTALL$nonTAL <- factor(TARGET_DESeqTALL$detailed_class %in% c("TLX", "HOXA","LYL/LMO"))
+colData(TARGET_DESeqTALL) # Non tall are true
+# re run with new desgin
+design(TARGET_DESeqTALL)<- ~ 1 + nonTAL
+TARGET_DESeqTALL <- DESeq(TARGET_DESeqTALL)
+resultsNames(TARGET_DESeqTALL)
+
+res <- results(TARGET_DESeqTALL, contrast = list("nonTAL_TRUE_vs_FALSE"))
+res <- as.data.frame(res[order(res$padj),])
+
+res[rownames(res) == "BEX2",]
+res[rownames(res) == "BEX1",]
+res[rownames(res) == "BEX5",]
+
+# P value where added manualy on the plot
+```
+
+```{r}
+#save plot
+#Figure 3 panel C
+image <- ggplot(df_long, aes(x = gene, y = expression, fill = class)) +
+  geom_boxplot(position = position_dodge(width = 0.8))+
+  labs(title = "Boxplot des expressions géniques par condition",
+       x = "Gène",
+       y = "Expression") +
+  theme_minimal()+ scale_fill_manual(values=c("#9BB655FF","#6C74C6","#D89873FF","#803342FF"))
+
+#This actually save the plot in a image
+ggsave(file="/workspace/userDUPREZ/Equipes_PF_Services/EQ_Duprez/EQ_Duprez/LAL-T/7_Papier/Papier BEX/octobre24/Blood adv/revision janvier 2025/Figure_HQ/Fig3_C.svg", plot=image, width=3200, height=1300,units = "px",dpi = 320, device = "svg")
+
+```
+
+
+# Acute Leukemia analysis (figure sup3)
+```{r}
+RNA_matrix_TARGET <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_AL.rds"))
+clinical_matrix_TARGET <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/clinical_matrix_TARGET_AL.rds"))
+all(rownames(clinical_matrix_TARGET) == colnames(RNA_matrix_TARGET)) #they are all in the same order of patient
+```
+
+### Convert ID
+```{r}
+# https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/ to convert geneID using TCGA gtf
+#GENCODE v36 gtf https://gdc.cancer.gov/about-data/gdc-data-processing/gdc-reference-files
+
+gtf.gr = rtracklayer::import(paste0(WORKING_DIR,"/01_Data/gencode.v36.annotation.gtf")) 
+gtf.df = as.data.frame(gtf.gr)
+
+gtf.df <- gtf.df[gtf.df$type == "gene",]
+gtf.df <- gtf.df[gtf.df$gene_type == "protein_coding",] #keeping only protein coding Gene
+
+#Looking at duplicates
+n_occur <- data.frame(table(gtf.df$gene_name))
+temp <- n_occur[n_occur$Freq > 1,]
+
+#Modification to add their Ensmbl ID
+tmp <- gtf.df[gtf.df$gene_name %in% temp$Var1,]
+tmp <- tmp[,c("gene_id","gene_name")] #subsetting the df
+tmp$gene_name <- paste(tmp$gene_id,tmp$gene_name,sep="_")
+
+gtf.df[gtf.df$gene_id %in% tmp$gene_id,]$gene_name <- tmp$gene_name
+
+genes = (gtf.df[ ,c("gene_id","gene_name")])
+
+length(unique(genes$gene_id))# so all ensembl ID are unique at this step
+
+genes <- genes[order(genes$gene_id),]
+
+
+## Subset RNA matrix to keep only protein coding genes
+RNA_matrix_TARGET_AL <- RNA_matrix_TARGET[rownames(RNA_matrix_TARGET) %in% genes$gene_id, ]
+
+tmp<- intersect(genes$gene_id,rownames(RNA_matrix_TARGET_AL))
+tmp <- genes[genes$gene_id %in% tmp,]#subset gene to match the genes in my df
+
+all(tmp$gene_id == rownames(RNA_matrix_TARGET_AL)) #they are all in the same order of genes
+rownames(RNA_matrix_TARGET_AL) <- tmp$gene_name #rename 
+
+saveRDS(RNA_matrix_TARGET_AL,file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_AL_convert.rds"))
+```
+
+### load final matrix
+```{r}
+clinical_matrix_TARGET_AL <- readRDS(paste0(WORKING_DIR,"/01_Data/Object/clinical_matrix_TARGET_AL.rds"))
+RNA_matrix_TARGET_AL <- readRDS(paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_AL_convert.rds"))
+
+table(clinical_matrix_TARGET_AL$simple_class)
+table(clinical_matrix_TARGET_AL$detailed_class)
+```
+
+
+```{r}
+TARGET_DESeqAL <- DESeqDataSetFromMatrix(countData=RNA_matrix_TARGET_AL, 
+                              colData=clinical_matrix_TARGET_AL, 
+                              design= ~ simple_class)
+TARGET_DESeqAL <- DESeq(TARGET_DESeqAL)
+
+vsdataAL <- vst(TARGET_DESeqAL, blind=FALSE) 
+```
+
+
+### Heatmap
+```{r}
+mat_vst <- assay(vsdataAL)
+gene_vec <- c("FLT3","CEBPA","CD33","IDH1","MPO","KIT","MME","CD19","MS4A1","CD79A","CD79B","CD3D","CD2","CD7","LCK","CD1E","BEX1","BEX2","BEX5","TAL1")
+mat_vst_sub <- mat_vst[gene_vec,]
+scaled_mat = t(scale(t(mat_vst_sub))) # row centered matrix
+
+hm_colors = c("dodgerblue1","white","red2")
+#to automate scale
+hm_limit =c(min(scaled_mat),0, max(scaled_mat))
+
+
+# sorting sample to appear group together
+sort_clinical <- clinical_matrix_TARGET_ALL[order(clinical_matrix_TARGET_ALL$simple_class,clinical_matrix_TARGET_ALL$detailed_class),] # sort by two column
+all(sort_clinical$TARGET_USI == colnames(scaled_mat))
+#need to re order RNA
+scaled_mat_order <- scaled_mat[, match(sort_clinical$TARGET_USI, colnames(scaled_mat))]
+all(sort_clinical$TARGET_USI == colnames(scaled_mat_order)) # now it's ok
+
+ann <-data.frame(sort_clinical$simple_class, sort_clinical$detailed_class)
+
+
+cond_simpl <- unique(ann$sort_clinical.simple_class)
+cond_detail <- unique(ann$sort_clinical.detailed_class)
+
+# Choisir une palette de couleurs de paletteer
+palette <- as.character(paletteer::paletteer_d("ggthemes::Tableau_20", n = length(cond_detail)))
+palette2 <- c("#B8336A","#8CC7A1","#FFB01F", "#EB886F")
+
+
+# Créer une liste avec les associations condition-couleur
+color_list <- list()
+names(palette2) <- cond_simpl
+names(palette) <- cond_detail
+color_list <- append(color_list,list('sort_clinical.simple_class' = palette2))
+color_list <- append(color_list,list('sort_clinical.detailed_class' = palette))
+  
+colAnn <- ComplexHeatmap::HeatmapAnnotation(df = ann,
+which = 'col',
+col = color_list,
+annotation_width = unit(c(1, 4), 'cm'),
+gap = unit(1, 'mm'))
+
+
+## Plot
+ComplexHeatmap::Heatmap(scaled_mat_order,show_column_names = FALSE, cluster_columns = F,cluster_rows = T, top_annotation = colAnn,col = colorRamp2(hm_limit,hm_colors), 
+  column_title_gp = gpar(fontsize = 9),
+  row_names_gp = gpar(fontsize = 9),
+  column_split = factor(as.character(ann$sort_clinical.detailed_class),levels=unique(ann$sort_clinical.detailed_class)))
+
+```
+
+## Fig sup 3
+```{r}
+#Export 
+
+svg("/workspace/userDUPREZ/Equipes_PF_Services/EQ_Duprez/EQ_Duprez/LAL-T/7_Papier/Papier BEX/octobre24/Blood adv/revision janvier 2025/Figure_HQ/Pannel/Figsup_3_A.svg", width = 15, height = 5) #in inch
+plot(ComplexHeatmap::Heatmap(scaled_mat_order,show_column_names = FALSE, cluster_columns = F,cluster_rows = T, top_annotation = colAnn,col = colorRamp2(hm_limit,hm_colors), 
+  column_title_gp = gpar(fontsize = 9),
+  row_names_gp = gpar(fontsize = 9),
+  column_split = factor(as.character(ann$sort_clinical.detailed_class),levels=unique(ann$sort_clinical.detailed_class))))
+dev.off()
+```
+
+
+# ALL analysis (Figure 2)
+```{r}
+# Object with only Acute lymphoblasitc thus on P2
+clinical_matrix_TARGET_P2  <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/clinial_matrix_TARGET_P2.rds"))
+RNA_matrix_TARGET_P2  <- readRDS(file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_P2.rds"))
+
+
+# reorgnaisation medatadata
+unique(clinical_matrix_TARGET_P2$Classification)
+# The classification column is detailed for AML but not for T and B.. I need to sort this into different columns
+colnames(clinical_matrix_TARGET_P2) <- c("TARGET_USI","detailed_class")
+clinical_matrix_TARGET_P2$simple_class <- clinical_matrix_TARGET_P2$detailed_class
+unique(clinical_matrix_TARGET_P2$simple_class)
+
+clinical_matrix_TARGET_P2 <- within(clinical_matrix_TARGET_P2,simple_class[detailed_class %in% c("B-Precursor")] <- "B-ALL")
+clinical_matrix_TARGET_P2 <- within(clinical_matrix_TARGET_P2,simple_class[detailed_class %in% c("T Cell ALL")] <- "T-ALL")
+
+#Some category I don"t need and filter out
+sum(clinical_matrix_TARGET_P2$simple_class == "B precursor (Non-T, Non-B ALL)", na.rm = TRUE)
+clinical_matrix_TARGET_P2 <- clinical_matrix_TARGET_P2[clinical_matrix_TARGET_P2$simple_class != "B precursor (Non-T, Non-B ALL)",]
+
+# Get subgroup of T-ALL
+# Loading the subgroup classification file
+P2_Target_clinical_TALL <-readxl::read_xlsx((paste0(WORKING_DIR,"/01_Data/GDCdata/TARGET-ALL-P2/Clinical/Clinical_Supplement/206f7eec-326e-4fcd-b244-338a522ff384/TARGET_ALL_ClinicalData_Validation_Supplement_20230727.xlsx")))
+P2_Target_clinical_TALL <- P2_Target_clinical_TALL[,c("TARGET USI","Group")] #subsetting the df
+
+# For T-ALL patient removing from sample info P2 patient with unknow T-ALL subgroup patient
+unique(P2_Target_clinical_TALL$Group)
+Unk <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "Unknown",]$`TARGET USI`
+P2_Target_clinical_TALL <- P2_Target_clinical_TALL[ ! P2_Target_clinical_TALL$`TARGET USI` %in% Unk, ]
+Unk <- P2_Target_clinical_TALL[which(is.na(P2_Target_clinical_TALL$Group)),]$`TARGET USI` # Get NA patient
+P2_Target_clinical_TALL <- P2_Target_clinical_TALL[ ! P2_Target_clinical_TALL$`TARGET USI` %in% Unk, ]
+
+tal1<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TAL1",]$`TARGET USI` # all ID for TAL1 patient
+tal2<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TAL2",]$`TARGET USI` 
+tal3<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "LMO1/2",]$`TARGET USI` 
+NKX1<- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "NKX2_1",]$`TARGET USI`
+LYL <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "LMO2_LYL1",]$`TARGET USI` 
+HOXA <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "HOXA",]$`TARGET USI` 
+TLX1 <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TLX1",]$`TARGET USI` 
+TLX3 <- P2_Target_clinical_TALL[P2_Target_clinical_TALL$Group == "TLX3",]$`TARGET USI`
+
+clinical_matrix_TARGET_P2[clinical_matrix_TARGET_P2$TARGET_USI %in% tal1,]$detailed_class <- "TAL/LMO"
+clinical_matrix_TARGET_P2[clinical_matrix_TARGET_P2$TARGET_USI %in% tal2,]$detailed_class <- "TAL/LMO"
+clinical_matrix_TARGET_P2[clinical_matrix_TARGET_P2$TARGET_USI %in% tal3,]$detailed_class <- "TAL/LMO"
+clinical_matrix_TARGET_P2[clinical_matrix_TARGET_P2$TARGET_USI %in% NKX1,]$detailed_class <- "TLX"
+clinical_matrix_TARGET_P2[clinical_matrix_TARGET_P2$TARGET_USI %in% LYL,]$detailed_class <- "LYL/LMO"
+clinical_matrix_TARGET_P2[clinical_matrix_TARGET_P2$TARGET_USI %in% HOXA,]$detailed_class <- "HOXA"
+clinical_matrix_TARGET_P2[clinical_matrix_TARGET_P2$TARGET_USI %in% TLX1,]$detailed_class <- "TLX"
+clinical_matrix_TARGET_P2[clinical_matrix_TARGET_P2$TARGET_USI %in% TLX3,]$detailed_class <- "TLX"
+
+unique(clinical_matrix_TARGET_P2$detailed_class)
+
+#subset RNA matrix to match clinical ID 
+patientID_keep <-intersect(clinical_matrix_TARGET_P2$TARGET_USI,colnames(RNA_matrix_TARGET_P2)) 
+RNA_matrix_TARGET_P2<- RNA_matrix_TARGET_P2[,patientID_keep]
+
+```
+
+### Convert ID
+```{r}
+# https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/ to convert geneID using TCGA gtf
+#GENCODE v36 gtf https://gdc.cancer.gov/about-data/gdc-data-processing/gdc-reference-files
+
+gtf.gr = rtracklayer::import(paste0(WORKING_DIR,"/01_Data/gencode.v36.annotation.gtf")) 
+gtf.df = as.data.frame(gtf.gr)
+
+gtf.df <- gtf.df[gtf.df$type == "gene",]
+gtf.df <- gtf.df[gtf.df$gene_type == "protein_coding",] #keeping only protein coding Gene
+
+#Looking at duplicates
+n_occur <- data.frame(table(gtf.df$gene_name))
+temp <- n_occur[n_occur$Freq > 1,]
+
+#Modification to add their Ensmbl ID
+tmp <- gtf.df[gtf.df$gene_name %in% temp$Var1,]
+tmp <- tmp[,c("gene_id","gene_name")] #subsetting the df
+tmp$gene_name <- paste(tmp$gene_id,tmp$gene_name,sep="_")
+
+gtf.df[gtf.df$gene_id %in% tmp$gene_id,]$gene_name <- tmp$gene_name
+
+genes = (gtf.df[ ,c("gene_id","gene_name")])
+
+length(unique(genes$gene_id))# so all ensembl ID are unique at this step
+
+genes <- genes[order(genes$gene_id),]
+
+
+## Subset RNA matrix to keep only protein coding genes
+RNA_matrix_TARGET_P2 <- RNA_matrix_TARGET_P2[rownames(RNA_matrix_TARGET_P2) %in% genes$gene_id, ]
+
+tmp<- intersect(genes$gene_id,rownames(RNA_matrix_TARGET_P2))
+tmp <- genes[genes$gene_id %in% tmp,]#subset gene to match the genes in my df if needed
+
+all(tmp$gene_id == rownames(RNA_matrix_TARGET_P2)) #they are all in the same order of genes
+
+
+rownames(RNA_matrix_TARGET_P2) <- tmp$gene_name #rename 
+
+saveRDS(RNA_matrix_TARGET_P2, file = paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_ALL_convert.rds"))
+saveRDS(clinical_matrix_TARGET_P2, file = paste0(WORKING_DIR,"/01_Data/Object/clinical_matrix_TARGET_ALL_convert.rds"))
+```
+
+### load final matrix
+```{r}
+clinical_matrix_TARGET_ALL <- readRDS(paste0(WORKING_DIR,"/01_Data/Object/clinical_matrix_TARGET_ALL_convert.rds"))
+RNA_matrix_TARGET_ALL <- readRDS(paste0(WORKING_DIR,"/01_Data/Object/RNA_matrix_TARGET_ALL_convert.rds"))
+```
+
+### Deseq2
+```{r}
+TARGET_DESeqALL <- DESeqDataSetFromMatrix(countData=RNA_matrix_TARGET_ALL, 
+                              colData=clinical_matrix_TARGET_ALL, 
+                              design= ~ simple_class)
+TARGET_DESeqALL <- DESeq(TARGET_DESeqALL)
+resultsNames(TARGET_DESeqALL) #get comparison that was done
+```
+
+### Visu
+```{r}
+# PCA
+#First we need to transform the raw count data
+#vst function will perform variance stabilizing transformation
+vsdataALL <- vst(TARGET_DESeqALL, blind=FALSE) 
+
+p <- plotPCA(vsdataALL, intgroup="simple_class",returnData = TRUE) 
+ggplot(p)+geom_point(aes(x=PC1, y=PC2,col=group),size=2) + theme_void()+
+  scale_color_manual(values = c("#FFB01F",
+                                "#EB886F"))
+
+# Calculer la variance expliquée par chaque composante principale
+pca <- prcomp(t(assay(vsdataALL)))
+variance_explained <- (pca$sdev^2 / sum(pca$sdev^2)) * 100
+# Ajouter cette information au dataframe de pcaData
+p$PC1_var <- round(variance_explained[1], 1)
+p$PC2_var <- round(variance_explained[2], 1)
+
+ggplot(p)+geom_point(aes(x=PC1, y=PC2,col=group),size=2) + 
+  xlab(paste0("PC1: ", p$PC1_var[1], "% variance")) +
+  ylab(paste0("PC2: ", p$PC2_var[1], "% variance")) +
+  scale_color_manual(values = c("#FFB01F",
+                                "#EB886F"))
+```
+
+## Heatmap ALL
+```{r}
+mat_vst <- assay(vsdataALL)
+gene_vec <- c("MME","CD19","MS4A1","CD79A","CD79B","CD3D","CD2","CD7","LCK","CD1E","BEX1","BEX2","BEX3","BEX4","BEX5")
+mat_vst_sub <- mat_vst[gene_vec,]
+scaled_mat = t(scale(t(mat_vst_sub))) # row centered matrix
+
+hm_colors = c("dodgerblue1","white","red2")
+#to automate scale
+hm_limit =c(min(scaled_mat),0, max(scaled_mat))
+
+
+# sorting sample to appear group together
+sort_clinical <- clinical_matrix_TARGET_ALL[order(clinical_matrix_TARGET_ALL$simple_class),] # sort by one column
+
+sort_clinical <- sort_clinical %>% arrange(simple_class, sample(n())) # sort by group but inside group make it random (to avoid bias by subgroup)
+all(sort_clinical$TARGET_USI == colnames(scaled_mat))
+#need to re order RNA
+scaled_mat_order <- scaled_mat[, match(sort_clinical$TARGET_USI, colnames(scaled_mat))]
+all(sort_clinical$TARGET_USI == colnames(scaled_mat_order)) # now it's ok
+
+ann <-data.frame(sort_clinical$simple_class)
+cond_simpl <- unique(ann$sort_clinical.simple_class)
+
+# Choisir une palette de couleurs de paletteer
+
+palette2 <- c("#FFB01F", "#EB886F")
+
+
+# Créer une liste avec les associations condition-couleur
+color_list <- list()
+names(palette2) <- cond_simpl
+color_list <- append(color_list,list('sort_clinical.simple_class' = palette2))
+
+  
+colAnn <- HeatmapAnnotation(df = ann,
+which = 'col',
+col = color_list,
+annotation_width = unit(c(1, 4), 'cm'),
+gap = unit(1, 'mm'),
+annotation_label = "Clinical classification")
+
+#manually slicing
+row_split = rep("group1", 15)
+row_split[11:15] = "group2"
+
+set.seed(123) # for kmean reproducibility
+ComplexHeatmap::Heatmap(scaled_mat_order,show_column_names = FALSE,cluster_columns = F, row_order = gene_vec, top_annotation = colAnn,col = colorRamp2(hm_limit,hm_colors), column_split = ann$sort_clinical.simple_class ,show_row_dend = F, heatmap_legend_param = list(title="r norm", direction="vertical"), row_split = row_split,row_gap = unit(8, "mm"))
+```
+
+```{r}
+#ggsave not working on complex heatmap
+
+svg("/workspace/userDUPREZ/Equipes_PF_Services/EQ_Duprez/EQ_Duprez/LAL-T/7_Papier/Papier BEX/octobre24/Blood adv/revision janvier 2025/Figure_HQ/Fig2_panelA.svg", width = 8, height = 4) #in inch
+plot(ComplexHeatmap::Heatmap(scaled_mat_order,show_column_names = FALSE,cluster_columns = F, row_order = gene_vec, top_annotation = colAnn,col = colorRamp2(hm_limit,hm_colors), column_split = ann$sort_clinical.simple_class ,show_row_dend = F, heatmap_legend_param = list(title="r norm", direction="vertical"), row_split = row_split,row_gap = unit(3, "mm"),row_names_gp = gpar(fontsize = 9)))
+dev.off()
+```
+
