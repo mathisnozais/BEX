@@ -2,17 +2,18 @@
 
 ## Overview
 
-This repository describes how the scRNAseq data analysis was performed with Seurat. It contains the instructions and material to reproduce the analysis reported in the article.To reproduce the analysis, you have to first, prepare the environments (see "Prerequisites" section below), then execute the analysis described in the "Run the analysis" section below.
+This repository describes how the scRNAseq data analysis was performed with Seurat. It contains the instructions and material to reproduce the analysis reported in the article.
+To reproduce the analysis, you have to first, prepare the environments (see "Prerequisites" section below), then execute the analysis described in the "Run the analysis" section below.
 
 ## Setup the experiment
 ### Prerequisites
 
-Docker container images are available on [zenodo](https://doi.org/10.5281/zenodo.4636520). change link
+Docker container images are available on [zenodo](https://doi.org/10.5281/zenodo.14044880).
 In order to prepare the environment for analysis execution, it is required to:
 - Clone this github repository and set the WORKING_DIR variable
 - Download the RStudio / Seurat docker image tar file
 - Load the docker image on your system
-- Download files to perform the analysis on [zenodo](https://doi.org/10.5281/zenodo.4636520) change link
+- Download files to perform the analysis on [zenodo](https://doi.org/10.5281/zenodo.14044880)
 
 #### Clone Github repository
 
@@ -49,6 +50,31 @@ Metadata_matrix_sub.csv
 ```bash
 
 dowload link xxx
+
+```
+
+For suplementary figure
+```bash
+# Mice thymus in scRNAseq
+# From Scarauzzino et al - https://www.embopress.org/doi/full/10.15252/embj.2021110023
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE184544 
+ THymus TOT_WT ?? # Raw data
+wget -P $WORKING_DIR/01_Data https://zenodo.org/records/14044880/files/ThymusWT_clean_cc-regressed_noADT.Robj # Processed object 
+
+
+# Human thymus in scRNAseq 
+# From Li et al - https://www.nature.com/articles/s41467-024-51767-y
+# https://zenodo.org/records/13207776
+wget -P $WORKING_DIR/01_Data https://zenodo.org/records/13207776/files/thymus.sc.RDS #already processed object
+
+
+# From Park et al - https://www.science.org/doi/10.1126/science.aay3224
+# https://zenodo.org/records/5500511
+wget -P $WORKING_DIR/01_Data https://zenodo.org/records/5500511/files/thymus_annotated_matrix_files.zip
+unzip thymus_annotated_matrix_files.zip # we are only interested in HTA08.v01.A05.Science_human_fig1.h5ad
+
+# Park data modified for Seurat 
+wget -P $WORKING_DIR/01_Data https://zenodo.org/records/14044880/files/Park_dataset.robj
 ```
 
 ### Run the analysis
