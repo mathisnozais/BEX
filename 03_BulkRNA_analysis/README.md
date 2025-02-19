@@ -18,7 +18,7 @@ In order to prepare the environment for analysis execution, it is required to:
 - Clone this github repository and set the WORKING_DIR variable (if it was not previously done following the BulkRNA_preprocessing)
 - Download the RStudio / DESeq2 docker image tar file
 - Load the docker image on your system
-- Download files to perform the analysis on [zenodo](https://doi.org/10.5281/zenodo.14044880)
+- Download files stored on [zenodo](https://doi.org/10.5281/zenodo.14044880)to perform the analysis.
  
 #### Clone Github repository
 
@@ -52,7 +52,7 @@ docker run -d --name rna431-2 -p 9090:8787 -v $WORKING_DIR:/workspace rna431-2
 
 All the analysis to produces the figures can be performed using "RNA_TCGA_BEX.Rmd" script.
 TCGA data where obtained via the CDC database. You can re do the downloading step to produce the matrices in the beggining of the rmd.
-You can also avoid this step by going to the next section and load directly the raw data matrix.
+You can also avoid this step by going to the next rmd section and load directly the raw data matrix.
 You can also used as an input a specific matrix for your plot of interest.
 
 ### Download data
@@ -80,7 +80,7 @@ wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/recor
 
 	## Subset and gene converted matrices for ALL analysis and figure
 wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/clinical_matrix_TARGET_ALL_convert.rds # For ALL clinical matrix 
-wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_ALL_convert.rds# For ALL RNA matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_ALL_convert.rds # For ALL RNA matrix 
 
 # Other files needed for the analysis 
 wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/gencode.v36.annotation.gtf
@@ -90,7 +90,7 @@ wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/1404
 ## CRISPR-CAS9 analysis
 
 All the analysis to produces the figures can be performed using "Bex_RNA_CRISPR.Rmd" script.
-At this step we assume that the pre-processing was already performed. If not you can run the [pre-processing](01_BulkRNA_preprocessing/) code or start from here by downloading input matrix used.
+At this step we assume that the pre-processing was already performed. If not you can run the [pre-processing](01_BulkRNA_preprocessing/README.md) code or start from here by downloading input matrix used.
 
 ### Download data
 
