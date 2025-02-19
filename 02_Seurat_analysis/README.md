@@ -22,7 +22,7 @@ You must set an environment variable called WORKING_DIR with a value set to the 
 For instance, if I clone the Git repository in "/home/nozais/workspace", then the WORKING_DIR variable will be set to :
 
 ```bash
-export WORKING_DIR=/home/nozais/workspace/Myc_Pten
+export WORKING_DIR=/home/nozais/workspace/BEX
 ```
 
 #### Docker images
@@ -59,6 +59,7 @@ wget -P $WORKING_DIR/01_Data https://zenodo.org/records/14044880/files/BC_BEX_mi
 
 For suplementary figure
 ```bash
+
 # Mice thymus in scRNAseq
 # From Scarauzzino et al - https://www.embopress.org/doi/full/10.15252/embj.2021110023
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE184544 
@@ -79,7 +80,9 @@ unzip thymus_annotated_matrix_files.zip # we are only interested in HTA08.v01.A0
 
 # Park data modified for Seurat 
 wget -P $WORKING_DIR/01_Data https://zenodo.org/records/14044880/files/Park_dataset.robj
+
 ```
+
 > [!NOTE]  
 > For Park et al, available data are in h5ad format. We converted it to an robj that you can directly download. If you want to perform the conversion you can follow the command [down bellow](#h5ad-conversion) 
 
@@ -89,3 +92,30 @@ You can access the code chunk by chunk via "BEX_scRNA_Git" Rmd. You'll be able t
 Then you'll be able to reproduce the figure in the paper.
 
 ## H5AD conversion
+
+We made a Docker image stored on Zenodo, to convert H5AD to Seurat object as many solution on internet failed. 
+
+> [!WARNING] 
+> This method is memory consumming + the data from Park are pretty heavy thus when testing on our computer it uses around 50 Go of RAM.
+> Be sure you have enought RAM avalaible to avoid crashing your computer.
+
+
+```bash
+
+# To download the docker "H5AD"
+wget -P $WORKING_DIR/Container/H5AD https://zenodo.org/records/14044880/files/h5ad.tar
+
+# To load it
+docker load < $WORKING_DIR/Container/H5AD/h5ad.tar
+
+# To run it
+docker run -d --name h5ad -p 8787:8787 -v $WORKING_DIR:/workspace h5ad
+```
+You will need h5ad file from Park et al for example
+```bash
+# From Park et al - https://www.science.org/doi/10.1126/science.aay3224
+# https://zenodo.org/records/5500511
+wget -P $WORKING_DIR/01_Data https://zenodo.org/records/5500511/files/thymus_annotated_matrix_files.zip
+unzip thymus_annotated_matrix_files.zip # we are only interested in HTA08.v01.A05.Science_human_fig1.h5ad
+```
+Then you can use the script "H5AD_Park_Git" for the conversion.

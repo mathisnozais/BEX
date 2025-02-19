@@ -1,0 +1,72 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-01-28"
+editor_options: 
+  chunk_output_type: console
+---
+##################
+
+Docker H5AD need a computer with lot of RAM available.
+
+##################
+
+```{r}
+library(SeuratObject)
+library(Seurat)
+library(zellkonverter)
+library(SummarizedExperiment)
+```
+
+```{r}
+WORKING_DIR = "/" # modify here to the folder where the github was cloned
+```
+
+
+# Convert 
+From H5AD to seurat object
+
+```{r}
+#https://www.bioconductor.org/packages/release/bioc/vignettes/zellkonverter/inst/doc/zellkonverter.html
+######
+# computer need around 40/50 Go of RAM
+ab <- zellkonverter::readH5AD(paste0(WORKING_DIR,"/01_Data/thymus_annotated_matrix_files/HTA08.v01.A05.Science_human_fig1.h5ad")) #warning but seem to create the gene data slot
+dim(assay(ab, "X"))
+PARK_obj <- as.Seurat(ab, counts = "X", NULL) # to avoid logcount error, will create log after
+PARK_obj <- NormalizeData(PARK_obj, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Find and scale variable genes
+PARK_obj <- FindVariableFeatures(PARK_obj, do.plot = F, selection.method = "vst", nfeatures = 2000, display.progress = FALSE)
+PARK_obj <- ScaleData(PARK_obj,verbose = FALSE)  #use variable features by default
+
+PARK_obj <- RunPCA(object = PARK_obj,
+                    assay = "originalexp",
+                    verbose = T, #if TRUE print the top genes for each PC
+                    seed.use = 1234,
+                    npcs = 50) # sur les 50 premieres composantes
+  
+ElbowPlot(PARK_obj, ndims = 30, reduction = "pca")
+
+# choosing random dims as I won't use UMAP for now
+PARK_obj <- FindNeighbors(object = PARK_obj, 
+                           dims = 1:18, 
+                           verbose = FALSE, 
+                           force.recalc = TRUE, 
+                           reduction = "pca")
+DefaultAssay(PARK_obj) <- "originalexp"
+PARK_obj <- FindClusters(object = PARK_obj, 
+                          resolution =0.2,
+                          verbose = FALSE,
+                          random.seed = 1234)
+PARK_obj <- RunUMAP(object = PARK_obj, reduction = "pca", seed.use = 1234, dims = 1:18)
+
+DimPlot(PARK_obj)
+```
+
+## Save
+```{r}
+save(PARK_obj, file="/workspace/NASBioinfo/LALT/BIOINFO/BEX/Park_dataset.robj")
+# This object can now be open easily with Seurat and uses less memory
+```
+
+
