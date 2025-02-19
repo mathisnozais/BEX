@@ -90,7 +90,7 @@ wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/1404
 ## CRISPR-CAS9 analysis
 
 All the analysis to produces the figures can be performed using "Bex_RNA_CRISPR.Rmd" script.
-At this step we assume that the pre-processing was already performed. If not you can run the [pre-processing](01_BulkRNA_preprocessing/README.md) code or start from here by downloading input matrix used.
+At this step we assume that the pre-processing was already performed. If not you can run the [pre-processing](/01_BulkRNA_preprocessing/README.md) code or start from here by downloading input matrix used.
 
 ### Download data
 
