@@ -31,25 +31,29 @@ export WORKING_DIR=/home/nozais/workspace/Myc_Pten
 Docker image file is stored on Zenodo :
 
 ```bash
-# To download Seurat410
-wget -P $WORKING_DIR/Images/Docker https://zenodo.org/record/4636520/files/Seurat301v2.tar?download=1 NEED TO CHANGE
+# To download the docker "Seurat440"
+wget -P $WORKING_DIR/Container/Seurat440 https://zenodo.org/records/14044880/files/Seurat440paper.tar
 
 # To load it
-docker load < $WORKING_DIR/Container/Seurat410/Seurat410.tar
+docker load < $WORKING_DIR/Container/Seurat440/Seurat440paper.tar
 
 # To run it
-docker run -d --name seurat410 -p 9090:8787 -v $WORKING_DIR:/workspace seurat401
+docker run -d --name seurat440paper -p 8787:8787 -v $WORKING_DIR:/workspace seurat440paper
 ```
 
 #### Download data
-Using the raw matrix that can be retrieve from ... you can perform the pre processing steps.
-You can also directly load our Robject xxx to perform the analysis.
+Using the raw count matrix that can be retrieve with this repository you can perform the pre processing steps.
+You can also directly load our Robject to perform the analysis.
 
-RNA_matrix_sub.csv
-Metadata_matrix_sub.csv
+For raw count matrices you have access to gene count, HTO information ie:sample of origin of the cells and ADT count ie: Protein expression level
+- Raw count matrices
+	- RNA_matrix_sub.csv
+	- Metadata_matrix_sub.csv
+	- ADT_matrix_sub.csv
+
 ```bash
-
-dowload link xxx
+# Get Robject to perform analysis
+wget -P $WORKING_DIR/01_Data https://zenodo.org/records/14044880/files/BC_BEX_mice.Robj
 
 ```
 
@@ -76,9 +80,12 @@ unzip thymus_annotated_matrix_files.zip # we are only interested in HTA08.v01.A0
 # Park data modified for Seurat 
 wget -P $WORKING_DIR/01_Data https://zenodo.org/records/14044880/files/Park_dataset.robj
 ```
+> [!NOTE]  
+> For Park et al, available data are in h5ad format. We converted it to an robj that you can directly download. If you want to perform the conversion you can follow the command [down bellow](#h5ad-conversion) 
+
 
 ### Run the analysis
-You can access the code chunk by chunk via "Script_BEX_paper" Rmd. You'll be able to perform the preprocessing starting with the raw count matrices.
+You can access the code chunk by chunk via "BEX_scRNA_Git" Rmd. You'll be able to perform the preprocessing starting with the raw count matrices.
 Then you'll be able to reproduce the figure in the paper.
-You juste need to modify the WORKDIR at the begining of the script.
 
+## H5AD conversion

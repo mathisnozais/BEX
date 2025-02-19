@@ -1,0 +1,598 @@
+---
+title: "Script_BEX_Paper"
+author: "Mathis Nozais"
+date: "04/11/2024"
+output:
+  html_document:
+    code_folding: hide
+    code_download: true
+editor_options: 
+  chunk_output_type: console
+---
+
+#################
+
+Script for the mice scRNAseq for "BEX" paper.
+Made for Docker SEURAT 440
+
+#################
+
+```{r}
+library(Seurat)
+library(biomaRt)
+library(plotly)
+library(tidyverse)
+library(dplyr)
+library(viridis)
+library(patchwork) # to modify multi ggplot2 by Seurat
+library(plotly)
+library(ggrepel)
+library(svglite)
+library(paletteer)
+library(dplyr)
+library(reshape2)
+```
+
+
+Set your working directory to the folder clone from github
+```{r}
+# Set the variable to your working directory
+WORKING_DIR <- "/yourcomputer/BEX/03_BulkRNA_analysis" # should point to the github folder that you clone
+WORKING_DIR <- "/workspace/NASBioinfo/LALT/BIOINFO/BEX/GIT_TESTING/02_Seurat_analysis"  # to remove
+#  Path to the folder that will contain output objects
+OUTPUT_PATH <- (paste0(WORKING_DIR,"/03_Output/"))
+```
+
+
+# Pre-processing
+From raw matrix (extracted from a bigger experiment with many other data)
+```{r}
+# loading the matrices
+counts_matrix <- read.csv(paste0(WORKING_DIR,"/01_Data/RNA_matrix_sub.csv"), row.names = 1)
+metadata <- read.csv(paste0(WORKING_DIR,"/01_Data/Metadata_matrix_sub.csv"), row.names = 1) 
+ADT <- read.csv(paste0(WORKING_DIR,"/01_Data/ADT_matrix_sub.csv"), row.names = 1)
+```
+
+Creation of the Seurat object
+```{r}
+sub_Seurat <- CreateSeuratObject(counts = counts_matrix, assay = "RNA", meta.data = metadata)
+```
+
+
+```{r}
+# Load in the UMI matrix
+umi <- GetAssayData(object =sub_Seurat, slot = "counts")
+
+
+#create an empty matrix containing NAs
+Cell.list <- colnames(GetAssayData(object = sub_Seurat[["RNA"]], slot = "data" ) )
+ADT.list <- c(unique(rownames(ADT)))
+mat.adt <- matrix(nrow = length(ADT.list), ncol = length(Cell.list))
+rownames(mat.adt) = ADT.list
+colnames(mat.adt) = Cell.list
+
+# Get cell barcodes detected by both RNA and ADT
+joint_bcs <- intersect(colnames(umi),colnames(ADT))
+adt <- as.matrix(ADT[,joint_bcs])
+
+# Fill the empty matrix with values when existing
+mat.adt[,joint_bcs]<-adt[,joint_bcs]
+
+# Add ADT data as a new assay independent from RNA
+sub_Seurat[["ADT"]] <- CreateAssayObject(counts = mat.adt[,colnames(sub_Seurat)])
+
+# Normalize ADT data, here we use centered log-ratio (CLR) transformation
+sub_Seurat <- NormalizeData(sub_Seurat, assay = "ADT", normalization.method = "CLR")
+
+#Scale
+sub_Seurat <- ScaleData(sub_Seurat, assay = "ADT")
+
+```
+
+```{r}
+sub_Seurat <- NormalizeData(sub_Seurat,display.progress = FALSE) #testing that
+
+
+sub_Seurat <- FindVariableFeatures(object = sub_Seurat,assay = "RNA", selection.method = "vst", nfeatures = 2000)
+
+sub_Seurat  <- ScaleData(sub_Seurat,assay="RNA",verbose = FALSE, do.center = TRUE)
+  
+sub_Seurat <- RunPCA(object = sub_Seurat,
+                    assay = "RNA",
+                    verbose = FALSE, #if TRUE print the top genes for each PC
+                    seed.use = 1234,
+                    npcs = 50) # sur les 50 premieres composantes
+  
+ElbowPlot(sub_Seurat, ndims = 30, reduction = "pca")
+
+DimPlot(sub_Seurat,reduction = "pca",dims = 9:10,group.by = "MULTI_ID") 
+DimPlot(sub_Seurat,reduction = "pca",dims = 10:11,group.by = "MULTI_ID") 
+DimPlot(sub_Seurat,reduction = "pca",dims = 11:12,group.by = "MULTI_ID") #nope
+DimPlot(sub_Seurat,reduction = "pca",dims = 13:14,group.by = "MULTI_ID") # nope
+
+sub_Seurat <- FindNeighbors(object = sub_Seurat, 
+                           dims = 1:10, 
+                           verbose = FALSE, 
+                           force.recalc = TRUE, 
+                           reduction = "pca")
+
+DefaultAssay(sub_Seurat) <- "RNA"
+
+sub_Seurat <- FindClusters(object = sub_Seurat, 
+                          resolution =1 ,
+                          verbose = FALSE,
+                          random.seed = 1234)
+sub_Seurat <- RunUMAP(object = sub_Seurat, reduction = "pca", seed.use = 1234, dims = 1:10)
+
+DimPlot(sub_Seurat, group.by = "MULTI_ID")
+```
+
+## Cell cycle regression
+```{r}
+## Cell cycle
+cc.genes.updated.2019 #for Human need to use bIOmart if using mice
+
+human = useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl",version = 105) #Using a fixed version of the db as of DEc 21 allow to avoid getLDS error
+mouse = useEnsembl(biomart = "ensembl", dataset = "mmusculus_gene_ensembl", version = 105)
+genesV2 = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = cc.genes$s.genes , mart = human, attributesL = c("mgi_symbol"), martL = mouse, uniqueRows=T)
+S.Genes_mouse <- unique(genesV2[, 2])
+
+genesV2 = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = cc.genes$g2m.genes , mart = human, attributesL = c("mgi_symbol"), martL = mouse, uniqueRows=T)
+G2M.Genes_mouse <- unique(genesV2[, 2])
+
+#Assign Cell-Cycle Scores
+sub_Seurat_reg <- CellCycleScoring(object = sub_Seurat, s.features = S.Genes_mouse, g2m.features = G2M.Genes_mouse, set.ident = TRUE)
+
+ Tsne<-data.frame(
+    tSNE_1 = sub_Seurat_reg@reductions$umap@cell.embeddings[,1],
+    tSNE_2= sub_Seurat_reg@reductions$umap@cell.embeddings[,2],
+    gene= sub_Seurat_reg@meta.data$S.Score
+  )
+  HTO= sub_Seurat_reg@meta.data$MULTI_ID
+  Max=max(sub_Seurat_reg@meta.data$S.Score)
+  Min=min(sub_Seurat_reg@meta.data$S.Score)
+  ggplotly(ggplot(Tsne,aes(x=tSNE_1,y=tSNE_2))+geom_point(aes(color=gene,shape=HTO))+
+    scale_colour_gradient2(low = "blue",mid="orange",high="red",name="S score",midpoint=(Max+Min)/2))
+  
+  Tsne<-data.frame(
+    tSNE_1 = sub_Seurat_reg@reductions$umap@cell.embeddings[,1],
+    tSNE_2= sub_Seurat_reg@reductions$umap@cell.embeddings[,2],
+    gene= sub_Seurat_reg@meta.data$G2M.Score
+  )
+  HTO= sub_Seurat_reg@meta.data$MULTI_ID
+  Max=max(sub_Seurat_reg@meta.data$G2M.Score)
+  Min=min(sub_Seurat_reg@meta.data$G2M.Score)
+  
+  ggplotly(ggplot(Tsne,aes(x=tSNE_1,y=tSNE_2))+geom_point(aes(color=gene,shape=HTO))+
+    scale_colour_gradient2(low = "blue",mid="orange",high="red",name="G2M score",midpoint=(Max+Min)/2))
+
+  DimPlot(sub_Seurat_reg, reduction = "umap", group.by = "Phase")
+```
+
+Regression on the Seurat object
+```{r}
+#cell cycle regression
+sub_Seurat_reg <- ScaleData(sub_Seurat_reg, vars.to.regress = c("S.Score", "G2M.Score"), features = sub_Seurat_reg@assays$RNA@var.features)
+  
+sub_Seurat_reg <- RunPCA(object = sub_Seurat_reg,
+                    assay = "RNA",
+                    verbose = FALSE, #if TRUE print the top genes for each PC
+                    seed.use = 1234,
+                    npcs = 50) #sur les 50 premieres composantes
+```
+
+### Re clustering without cycle
+```{r}
+ElbowPlot(sub_Seurat_reg, ndims = 30, reduction = "pca")
+
+DimPlot(sub_Seurat_reg,reduction = "pca",dims = 7:8,group.by = "MULTI_ID") 
+DimPlot(sub_Seurat_reg,reduction = "pca",dims = 8:9,group.by = "MULTI_ID") 
+DimPlot(sub_Seurat_reg,reduction = "pca",dims = 9:10,group.by = "MULTI_ID") # 
+DimPlot(sub_Seurat_reg,reduction = "pca",dims = 10:11,group.by = "MULTI_ID") #
+DimPlot(sub_Seurat_reg,reduction = "pca",dims = 11:12,group.by = "MULTI_ID") # nope
+DimPlot(sub_Seurat_reg,reduction = "pca",dims = 12:13,group.by = "MULTI_ID") # nope
+DimPlot(sub_Seurat_reg,reduction = "pca",dims = 13:14,group.by = "MULTI_ID") # nope
+
+
+sub_Seurat_reg <- FindNeighbors(object = sub_Seurat_reg, 
+                           dims = 1:12, 
+                           verbose = FALSE, 
+                           force.recalc = TRUE, 
+                           reduction = "pca")
+DefaultAssay(sub_Seurat_reg) <- "RNA"
+sub_Seurat_reg <- FindClusters(object = sub_Seurat_reg, 
+                          resolution =1 ,
+                          verbose = FALSE,
+                          random.seed = 1234)
+sub_Seurat_reg <- RunUMAP(object = sub_Seurat_reg, reduction = "pca", seed.use = 1234, dims = 1:12,min.dist = 0.5)
+
+DimPlot(sub_Seurat_reg, group.by = "MULTI_ID")
+
+save(sub_Seurat_reg, file=paste0(WORKING_DIR,"/03_Output/BC_BEX_mice.Robj"))
+```
+
+# Loading object
+```{r}
+load(file=paste0(WORKING_DIR,"/03_Output/BC_BEX_mice.Robj"))
+```
+
+
+```{r}
+DimPlot(sub_Seurat_reg, group.by = "MULTI_ID", pt.size = 2)
+
+## Fine tune the clustering
+sub_Seurat_reg <- FindClusters(object = sub_Seurat_reg, 
+                          resolution =0.6,
+                          verbose = FALSE,
+                          random.seed = 1234)
+
+DimPlot(sub_Seurat_reg, group.by = "RNA_snn_res.0.6", pt.size = 2)
+#Choose the clustering that separate main T cell population. Some clusters will be grouped together at the end.
+```
+
+## Rename mice
+```{r}
+Idents(sub_Seurat_reg) <- "MULTI_ID"
+#Add tum_stage slot 
+sub_Seurat_reg@meta.data$tum_stage <-  ""
+
+# I'll call pre tum also physio to simplify
+sub_Seurat_reg@meta.data[c(WhichCells(sub_Seurat_reg,idents = "Thymus-790")),]$tum_stage = "Tumoral"  
+sub_Seurat_reg@meta.data[c(WhichCells(sub_Seurat_reg,idents = "Thymus-814")),]$tum_stage = "Physiological"  
+sub_Seurat_reg@meta.data[c(WhichCells(sub_Seurat_reg,idents = "Thymus-813")),]$tum_stage = "Physiological"  
+
+DimPlot(sub_Seurat_reg, group.by = "tum_stage", cols = c("#99C3FB","#ED7D31"),pt.size = 1.5)+ theme_void()
+```
+
+```{r}
+#Plot for paper
+image=DimPlot(sub_Seurat_reg, group.by = "tum_stage", cols = c("#99C3FB","#ED7D31"),pt.size = 1)+ theme_void()+NoLegend()
+
+#This actually save the plot in a image
+ggsave(file=paste0(WORKING_DIR,"/03_Output/Fig1_A.jpeg"), plot=image, width=2400, height=1600,units = "px",dpi = 320,device = "jpeg") # to test the ratio of image
+ggsave(file=paste0(WORKING_DIR,"/03_Output/Fig1_A.svg"), plot=image, width=2400, height=1600,units = "px",dpi = 320, device = "svg")
+```
+
+## Population
+
+### asign
+
+```{r}
+# Kept the smallest clustering to separate Dpblast and DN
+DimPlot(sub_Seurat_reg, group.by = "RNA_snn_res.0.6", label = T,pt.size = 2, label.size = 20)
+
+#fig paper
+image <- DimPlot(sub_Seurat_reg, group.by = "RNA_snn_res.0.6",pt.size = 1,cols = paletteer_d("ggthemes::Tableau_10"))+ theme_void()+NoLegend()
+ggsave(file=paste0(WORKING_DIR,"/03_Output/Fig1_C.svg"), plot=image, width=2400, height=1600,units = "px",dpi = 320, device = "svg")
+```
+
+```{r}
+Idents(sub_Seurat_reg) <- "RNA_snn_res.0.6"  
+sub_Seurat_reg@active.ident <- factor(sub_Seurat_reg@active.ident,levels=c("6","5","4","0","1","8","9","3","2","7"))
+
+# detailed wo cluster merged
+DotPlot(sub_Seurat_reg, features = c("adt_CD25","Ptcra","Sox13","Ikzf2","Trdc","Trac","Trbc2","Cd3d","Cd4","Cd8b1","Ccr9","Trp53inp1","Rag1","Sox4","Cd5","Cd27","Gzma","Hes1","Notch1","Top2a","Mki67","Cdk1","Cdk6","Myc"), dot.scale =5)+coord_flip()+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_gradient2(low = "blue3", mid = "white", high = "red") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+## Fig paper
+image <- DotPlot(sub_Seurat_reg, features = c("adt_CD25","Ptcra","Sox13","Ikzf2","Trdc","Trac","Trbc2","Cd3d","Cd4","Cd8b1","Ccr9","Trp53inp1","Rag1","Sox4","Cd5","Cd27","Gzma","Hes1","Notch1","Top2a","Mki67","Cdk1","Cdk6","Myc"), dot.scale =5)+coord_flip()+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.7) +
+  scale_colour_gradient2(low = "blue3", mid = "white", high = "red") +theme(axis.text=element_text(size=15),legend.text=element_text(size=15),axis.title=element_text(size=15))+
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+#This actually save the plot in a image
+ggsave(file=paste0(WORKING_DIR,"/03_Output/Fig1_B.jpeg"), plot=image, width=3200, height=2400,units = "px",dpi = 320,device = "jpeg")
+ggsave(file=paste0(WORKING_DIR,"/03_Output/Fig1_B.svg"), plot=image, width=3200, height=2400,units = "px",dpi = 320,device = "svg")
+
+## Asignn main cell population to group of cluster
+
+sub_Seurat_reg$annotation <- ""
+
+# extract cell bc per cluster
+clus0 <- row.names(subset(sub_Seurat_reg@meta.data, RNA_snn_res.0.6 == "0"))
+clus1 <- row.names(subset(sub_Seurat_reg@meta.data, RNA_snn_res.0.6 == "1"))
+clus2 <- row.names(subset(sub_Seurat_reg@meta.data, RNA_snn_res.0.6 == "2"))
+clus3 <- row.names(subset(sub_Seurat_reg@meta.data, RNA_snn_res.0.6 == "3"))
+clus4 <- row.names(subset(sub_Seurat_reg@meta.data, RNA_snn_res.0.6 == "4"))
+clus5 <- row.names(subset(sub_Seurat_reg@meta.data, RNA_snn_res.0.6 == "5"))
+clus6 <- row.names(subset(sub_Seurat_reg@meta.data, RNA_snn_res.0.6 == "6"))
+clus7 <- row.names(subset(sub_Seurat_reg@meta.data, RNA_snn_res.0.6 == "7"))
+clus8 <- row.names(subset(sub_Seurat_reg@meta.data, RNA_snn_res.0.6 == "8"))
+clus9 <- row.names(subset(sub_Seurat_reg@meta.data, RNA_snn_res.0.6 == "9"))
+
+
+# Assignment
+sub_Seurat_reg@meta.data[c(clus3,clus2,clus9,clus7),]$annotation = "DP_tum"  
+sub_Seurat_reg@meta.data[c(clus4,clus0,clus1,clus8),]$annotation = "DP_Q"  
+sub_Seurat_reg@meta.data[c(clus5),]$annotation = "DP_P"
+sub_Seurat_reg@meta.data[c(clus6),]$annotation = "DN"
+
+
+DimPlot(sub_Seurat_reg, group.by = "annotation",pt.size = 1.5)
+```
+
+
+## DGE
+```{r}
+# After the definition of the population will compare only tumoral cells to DP(P) as tumoral cell are cycling
+######## DP(P) vs tum ###########
+Idents(sub_Seurat_reg) <- "annotation"
+DGE_Prolif <- FindMarkers(sub_Seurat_reg,ident.1 = "DP_tum",ident.2 = "DP_P")
+
+#export to check gene manually
+DGE_Prolif <- DGE_Prolif[order(DGE_Prolif$avg_log2FC,decreasing = TRUE),] # sort by log2fc
+```
+
+## Volcano
+```{r}
+##### Volcano plot #####
+DGE_Prolif <- FindMarkers(sub_Seurat_reg,ident.1 = "DP_tum",ident.2 = "DP_P",min.pct = 0,logfc.threshold=0)
+
+DGE_Prolif$abs_fold <- abs(DGE_Prolif$avg_log2FC)
+
+DGE_Prolif$Significant <- ifelse(DGE_Prolif$p_val_adj < 0.05, ifelse(DGE_Prolif$abs_fold > 0.25 ,ifelse(DGE_Prolif$avg_log2FC >0, "Overexpressed in tumoral","Overexpressed in physio"),"Not Significative"), "Not Significative")
+
+
+
+DGE_Prolif$genename <- rownames(DGE_Prolif) 
+ggplot(DGE_Prolif, aes(x = avg_log2FC, y = -log10(p_val_adj))) +
+  geom_point(aes(color = Significant))+
+  guides(color = guide_legend(override.aes = list(size = 5)))+ #change point legend
+   scale_color_manual(values = c("grey" ,"#4678BB","#9A4177")) +
+   theme_bw(base_size = 12) + theme(legend.position = "bottom",text = element_text(size = 20 )) + #chnge all text size
+  scale_x_continuous( limits=c(-4, 4))+
+ geom_text_repel(
+    data = subset(DGE_Prolif,abs_fold >1.3 & p_val_adj < 10^-40),
+    aes(label = genename),
+    size = 4,
+    box.padding = unit(0.35, "lines"),
+    point.padding = unit(0.3, "lines"),min.segment.length = 0)
+
+```
+
+## Pannel 1-D
+```{r}
+#figure paper
+image <- ggplot(DGE_Prolif, aes(x = avg_log2FC, y = -log10(p_val_adj))) +
+  geom_point(aes(color = Significant))+
+  guides(color = guide_legend(override.aes = list(size = 5)))+ #change point legend
+   scale_color_manual(values = c("grey" ,"#4678BB","#9A4177")) +
+   theme_bw(base_size = 12) + theme(legend.position = "bottom",text = element_text(size = 15 )) + #chnge all text size
+  scale_x_continuous( limits=c(-4, 4))+
+ geom_text_repel(
+    data = subset(DGE_Prolif,abs_fold >1.3 & p_val_adj < 10^-40),
+    aes(label = genename),
+    size = 4,
+    box.padding = unit(0.35, "lines"),
+    point.padding = unit(0.3, "lines"),min.segment.length = 0)
+
+
+ggsave(file=paste0(WORKING_DIR,"/03_Output/Fig1_D.jpeg"), plot=image, width=2400, height=2400,units = "px",dpi = 320,device = "jpeg") # to test the ratio of image
+ggsave(file=paste0(WORKING_DIR,"/03_Output/Fig1_D.svg"), plot=image, width=2400, height=2400,units = "px",dpi = 320, device = "svg")
+
+```
+
+
+```{r}
+# Fig sup DGE T-ALL genes
+DGE_Prolif$genename <- rownames(DGE_Prolif) 
+image <- ggplot(DGE_Prolif, aes(x = avg_log2FC, y = -log10(p_val_adj))) +
+  geom_point(aes(color = Significant))+
+  guides(color = guide_legend(override.aes = list(size = 5)))+ #change point legend
+   scale_color_manual(values = c("grey" ,"#4678BB","#9A4177")) +
+   theme_bw(base_size = 12) + theme(legend.position = "bottom",text = element_text(size = 20 )) + #chnge all text size
+  scale_x_continuous( limits=c(-4, 4))+
+ geom_text_repel(
+    data = subset(DGE_Prolif,abs_fold >1.3 & p_val_adj < 10^-40),
+    aes(label = genename),
+    size = 4,
+    box.padding = unit(0.35, "lines"),
+    point.padding = unit(0.3, "lines"),min.segment.length = 0)+
+ geom_text_repel(
+    data = DGE_Prolif[c("Myc","Notch1","Cdk6","Gata3","Il7r","Trp53","Ly6c1","Eno1b","Eno1","Ly6a"),],
+    aes(label = genename, fontface = "bold.italic"),
+    size = 4,
+    box.padding = unit(0.35, "lines"),
+    point.padding = unit(0.3, "lines"),min.segment.length = 0)
+
+ggsave(file=paste0(WORKING_DIR,".03_Output/Figsup1_A.svg"), plot=image, width=2400, height=2400,units = "px",dpi = 320, device = "svg")
+```
+
+
+## BEX expression plot
+```{r}
+FeaturePlot(sub_Seurat_reg, features = c("Bex1","Bex2","Bex3","Bex4","Bex6"),pt.size = 1.5,cols =c("#F1EBE8","#E7ADAE","#E77CAE","#DB54A8","#BE2EB9","#7618CA","#5014BA","#230A6A")) + guide_area() + plot_layout(ncol = 3,guides = "collect")& theme_void() & theme(plot.title = element_text(hjust = 0.5, size = 30),legend.key.height = unit(1.6,'cm'), legend.key.width = unit(1,'cm'),legend.text=element_text(size=18))
+```
+
+```{r}
+#FIGURE PAPER
+image <- FeaturePlot(sub_Seurat_reg, features = c("Bex1","Bex2","Bex3","Bex4","Bex6"),pt.size = 1,cols =c("#F1EBE8","#E7ADAE","#E77CAE","#DB54A8","#BE2EB9","#7618CA","#5014BA","#230A6A")) + guide_area() + plot_layout(ncol = 3,guides = "collect")& theme_void() & theme(plot.title = element_text(hjust = 0.5, size = 15),legend.key.height = unit(1.6,'cm'), legend.key.width = unit(1,'cm'),legend.text=element_text(size=15))
+
+ggsave(file=paste0(WORKING_DIR,"/03_Output/Fig1_E.svg"), plot=image, width=3000, height=2400,units = "px",dpi = 320,device = "jpeg") # to test the ratio of image
+ggsave(file=paste0(WORKING_DIR,"/03_Output/Fig1_E.svg"), plot=image, width=3400, height=2400,units = "px",dpi = 320, device = "svg")
+
+```
+
+# Mice WT thymus
+
+## B6
+BEX_WT mice EMBO https://www.embopress.org/doi/full/10.15252/embj.2021110023
+```{r}
+load(file = paste0(WORKING_DIR,"/01_Data/ThymusWT_clean_cc-regressed_noADT.Robj")) #thymusWTclean.ccreg
+thymusWTclean.ccreg_update = UpdateSeuratObject(object = thymusWTclean.ccreg)
+
+thymusWTclean.ccreg_update <- FindClusters(object = thymusWTclean.ccreg_update, 
+                          resolution =0.42 ,
+                          verbose = FALSE,
+                          random.seed = 1234)
+
+DimPlot(thymusWTclean.ccreg_update, label = T)
+
+# rename cluster based on suplementary figures "EV2"
+Idents(thymusWTclean.ccreg_update) <- "RNA_snn_res.0.42"
+thymusWTclean.ccreg_update@meta.data$regroupclusters <- "NA"
+thymusWTclean.ccreg_update@meta.data[thymusWTclean.ccreg_update@meta.data$RNA_snn_res.0.42 == "8",]$regroupclusters <- "DP_samll"
+thymusWTclean.ccreg_update@meta.data[thymusWTclean.ccreg_update@meta.data$RNA_snn_res.0.42 == "0",]$regroupclusters <- "DP_samll"
+thymusWTclean.ccreg_update@meta.data[thymusWTclean.ccreg_update@meta.data$RNA_snn_res.0.42 == "1",]$regroupclusters <- "DN3a"
+thymusWTclean.ccreg_update@meta.data[thymusWTclean.ccreg_update@meta.data$RNA_snn_res.0.42 == "2",]$regroupclusters <- "DN3b_DN4"
+thymusWTclean.ccreg_update@meta.data[thymusWTclean.ccreg_update@meta.data$RNA_snn_res.0.42 == "3",]$regroupclusters <- "DP_CD69+"
+thymusWTclean.ccreg_update@meta.data[thymusWTclean.ccreg_update@meta.data$RNA_snn_res.0.42 == "4",]$regroupclusters <- "DN1_DN2"
+thymusWTclean.ccreg_update@meta.data[thymusWTclean.ccreg_update@meta.data$RNA_snn_res.0.42 == "5",]$regroupclusters <- "ISP_DPblast"
+thymusWTclean.ccreg_update@meta.data[thymusWTclean.ccreg_update@meta.data$RNA_snn_res.0.42 == "6",]$regroupclusters <- "SP"
+thymusWTclean.ccreg_update@meta.data[thymusWTclean.ccreg_update@meta.data$RNA_snn_res.0.42 == "7",]$regroupclusters <- "Tgd"
+
+FeaturePlot(thymusWTclean.ccreg_update, features =c("Bex1","Bex2","Bex3","Bex4","Bex6"),ncol = 5)
+
+Idents(thymusWTclean.ccreg_update) <- "regroupclusters"
+thymusWTclean.ccreg_update@active.ident <- factor(thymusWTclean.ccreg_update@active.ident,
+levels=c("DN1_DN2","DN3a","DN3b_DN4","ISP_DPblast","DP_samll","DP_CD69+","SP","Tgd"))
+
+
+DotPlot(thymusWTclean.ccreg_update, features =c("Cd34","Kit","Cpa3","Il2ra","Ptcra","Tfrc","Mki67","Lat","Lck","Rag1","Cd8b1","Cd8a","Cd4","Cd69","Cd5","Trdc","Bex1","Bex2","Bex3","Bex4","Bex6"),dot.scale = 7)+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_gradient2(low = "blue3", mid = "white", high = "red") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+```
+
+```{r}
+#Save plot Sup1
+image <- DotPlot(thymusWTclean.ccreg_update, features =c("Cd34","Kit","Cpa3","Il2ra","Ptcra","Tfrc","Mki67","Lat","Lck","Rag1","Cd8b1","Cd8a","Cd4","Cd69","Cd5","Trdc","Bex1","Bex2","Bex3","Bex4","Bex6"),dot.scale = 7)+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_gradient2(low = "blue3", mid = "white", high = "red") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))+ theme(text=element_text(size=10), axis.text = element_text(size = 10))
+
+ggsave(file=paste0(WORKING_DIR,"/03_Output/FigSup1_B.pdf"), plot=image, width=3600, height=1000,units = "px",dpi = 320, device = "pdf")
+```
+
+
+# Human WT thymus
+## Physio paper 1
+```{r}
+#nature comm 6 sep 24
+# 130 000 cells
+#https://www.nature.com/articles/s41467-024-51767-y#data-availability
+
+human_thym <- readRDS(paste0(WORKING_DIR,"/01_Data/thymus.sc.RDS"))
+FeaturePlot(human_thym,c("BEX1","BEX2","BEX3","BEX4","BEX5","TAL1","TAL2"),cols =c("#F1EBE8","#E7ADAE","#E77CAE","#DB54A8","#BE2EB9","#7618CA","#5014BA","#230A6A"))
+#VlnPlot(human_thym,c("BEX1","BEX3","BEX2","BEX5"))
+
+
+#subset pop of interest
+unique(human_thym$sub.class)
+
+
+## re order
+Idents(human_thym) <- "sub.class"  
+human_thym@active.ident <- factor(human_thym@active.ident,
+levels=c("DN_early","DN_re","DN_blast","DP_re","DP_blast","abT(entry)","CD8aa","CD8T","CD4T","CD8T_mem","CD4T_mem","Treg","Treg.diff","T_agonist","T_apoptosis","T_proliferating",
+ "NKT","ILC3","B_naive","B_memory","B_trans","Plasma",
+ "cTEC","mTEC","Fb","Fb_cycling","VSMC","Endo","Lymph",
+ "Mono","Ery",
+ "pDC","DC","Mac"))
+
+DotPlot(human_thym, features =c("BEX1","BEX2","BEX3","BEX4","BEX5","TAL1","TAL2"),dot.scale = 7)+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_gradient2(low = "blue3", mid = "white", high = "red") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+# export
+image <- DotPlot(human_thym, features =c("BEX1","BEX2","BEX3","BEX4","BEX5","TAL1","TAL2"),dot.scale = 8)+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_gradient2(low = "blue3", mid = "white", high = "red") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))+ theme(text=element_text(size=11), axis.text = element_text(size = 11))
+
+
+#This actually save the plot in a image
+ggsave(file=paste0(WORKING_DIR,"/03_Output/FigSup_Human1.pdf"), plot=image, width=2000, height=3600,units = "px",dpi = 320, device = "pdf")
+
+```
+
+## Physio paper 2
+PARK dataset converted 
+```{r}
+load(file = paste0(WORKING_DIR,"/01_Data/Park_dataset.robj"))
+
+DimPlot(PARK_obj, group.by = "Anno_level_5")
+
+
+FeaturePlot(PARK_obj, features = c("BEX1", "BEX2", "NGFRAP1", "BEX4", "BEX5", "TAL1", "TAL2"),cols =c("#F1EBE8","#E7ADAE","#E77CAE","#DB54A8","#BE2EB9","#7618CA","#5014BA","#230A6A"))
+
+Idents(PARK_obj) <- "Anno_level_5"  
+genes_of_interest <- c("BEX1", "BEX2", "NGFRAP1", "BEX4", "BEX5", "TAL1", "TAL2")
+expr_data <- FetchData(PARK_obj, vars = genes_of_interest)
+expr_data$sub.class <- Idents(PARK_obj)
+
+library(dplyr)
+mean_expr_by_class <- expr_data %>%
+  group_by(sub.class) %>%
+  summarise(across(all_of(genes_of_interest), mean))
+
+
+heatmap_matrix <- as.matrix(mean_expr_by_class[, -1])  # Enlever la colonne 'sub.class'
+rownames(heatmap_matrix) <- mean_expr_by_class$sub.class
+
+heatmap_long <- melt(heatmap_matrix)
+colnames(heatmap_long) <- c("Gene", "SubClass", "Expression")
+
+ggplot(heatmap_long, aes(x = SubClass, y = Gene, fill = Expression)) +
+  geom_tile(color = "white", size = 0.1) +  # Bordures blanches pour les cases
+  scale_fill_viridis(name = "Expression", option = "magma") +  # Palette viridis
+  coord_equal() +  # Pour garder les cases carrées
+  theme_minimal() +  # Style épuré
+  ggtitle("Heatmap des moyennes d'expression par type cellulaire") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Rotation des labels
+        axis.title.x = element_blank(),  # Pas de titre d'axe x
+        axis.title.y = element_blank())  # Pas de titre d'axe y
+
+
+# Set a specific order of annotation level
+unique(PARK_obj$Anno_level_5)
+unique(PARK_obj$Anno_level_4) # maybe easier to read
+Idents(PARK_obj) <- "Anno_level_4"  
+
+
+
+
+PARK_obj@active.ident <- factor(PARK_obj@active.ident,
+levels=c("ETP","DN","DP","αβT(entry)","CD8αα(I)","CD8αα(II)",'γδT',"CD8+T","CD4+T","CD8+Tmem",'CD4+Tmem',"Th17","Treg","Treg(diff)","T(agonist)"
+  ,"NKT","NK","ILC3","B_naive","B_memory","B_pro/pre","B_plasma",
+  "mTEC","cTEC","TEC(neuro)","TEC(myo)","Epi_GCM2","Fb_1","Fb_2","Fb_cycling","VSMC","Endo","Lymph","NMP",
+"Mono","Mgk",'Ery',"Mast",
+"pDC","DC1","DC2","aDC","Mac"
+)
+)
+
+"Lymph" # lylphatic endothelial cells
+"NMP" # don't know where to put it
+
+# T lymphoid, Thymic microevn, B Lympoid, other lymph, Myeloid, DC
+
+# Dot plot fig sup
+image <- DotPlot(PARK_obj, features =c("BEX1","BEX2","NGFRAP1","BEX4","BEX5","TAL1","TAL2"),dot.scale = 8)+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_gradient2(low = "blue3", mid = "white", high = "red") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))+  theme(text=element_text(size=11), axis.text = element_text(size = 11))
+
+
+#This actually save the plot in a image
+ggsave(file=paste0(WORKING_DIR,"/03_Output/FigSup_Human2.pdf"), plot=image, width=2000, height=3600,units = "px",dpi = 320, device = "pdf")
+
+
+# Dot plot version fig principal, without too much detail
+PARK_obj # subset park dataset to keep only subtype of interest for major fig
+PARK_sub <- subset(x = PARK_obj, idents = c("ETP","DN","DP","αβT(entry)","CD8αα(I)","CD8αα(II)",'γδT',"CD8+T","CD4+T","CD8+Tmem",'CD4+Tmem',"Th17","Treg","Treg(diff)","T(agonist)","NKT","NK", "mTEC","cTEC"))
+
+image <- DotPlot(PARK_sub, features =c("BEX1","BEX2","NGFRAP1","BEX4","BEX5","TAL1","TAL2"),dot.scale = 8)+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_gradient2(low = "blue3", mid = "white", high = "red") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))+ coord_flip()+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+  theme(text=element_text(size=11), axis.text = element_text(size = 11))
+
+ggsave(file=paste0(WORKING_DIR,"/03_Output/Fig2_C.pdf"), plot=image, width=4000, height=1000,units = "px",dpi = 320, device = "pdf")
+```
+
+
+
+
+
