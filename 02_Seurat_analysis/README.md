@@ -118,4 +118,4 @@ You will need h5ad file from Park et al for example
 wget -P $WORKING_DIR/01_Data https://zenodo.org/records/5500511/files/thymus_annotated_matrix_files.zip
 unzip thymus_annotated_matrix_files.zip # we are only interested in HTA08.v01.A05.Science_human_fig1.h5ad
 ```
-Then you can use the script "H5AD_Park_Git" for the conversion.
+Then you can use the script ["H5AD_Park_Git"](/02_Seurat_analysis/02_Script/H5AD_Park_Git.rmd)   for the conversion.
