@@ -13,12 +13,12 @@ For both analysis the setup will be similar.
 ## Setup the experiment
 ### Prerequisites
 
-Docker container images are available on [zenodo](https://doi.org/10.5281/zenodo.4636520). change link
+Docker container images are available on [zenodo](https://doi.org/10.5281/zenodo.14044880).
 In order to prepare the environment for analysis execution, it is required to:
 - Clone this github repository and set the WORKING_DIR variable (if it was not previously done following the BulkRNA_preprocessing)
 - Download the RStudio / DESeq2 docker image tar file
 - Load the docker image on your system
-- Download files to perform the analysis on [zenodo](https://doi.org/10.5281/zenodo.4636520) change link
+- Download files to perform the analysis on [zenodo](https://doi.org/10.5281/zenodo.14044880)
  
 #### Clone Github repository
 
@@ -59,35 +59,31 @@ You can also used as an input a specific matrix for your plot of interest.
 
 ```bash
 #Link to all data available for Seurat Analysis
-
-
-https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_AL.rds ??
-
-
+# Depending on where you want to start in the code you can choose one of those matrices.
 
 	## Matrices with raw TCGA dowloaded data
-wget dowload -P xxx https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_AML.rds # For AML RNA matrix 
-wget dowload -P xxx https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_P2.rds  # For P2 RNA matrix 
-wget dowload -P xxx https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_P3.rds  # For P3 RNA matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_AML.rds # For AML RNA matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_P2.rds  # For P2 RNA matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_P3.rds  # For P3 RNA matrix 
 
-wget dowload xxx https://zenodo.org/records/14044880/files/clinial_matrix_TARGET_AML.rds # For AML clinical matrix 
-wget dowload xxx https://zenodo.org/records/14044880/files/clinial_matrix_TARGET_P2.rds # For P2 clinical matrix 
-wget dowload  xxx https://zenodo.org/records/14044880/files/clinial_matrix_TARGET_P3.rds For P3 clinical matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/clinial_matrix_TARGET_AML.rds # For AML clinical matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/clinial_matrix_TARGET_P2.rds # For P2 clinical matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/clinial_matrix_TARGET_P3.rds For P3 clinical matrix 
 
 	## Subset and gene converted matrices for T-ALL analysis and figure
-wget dowload -P xxx https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_TALL_convert.rds # For T-ALL RNA matrix 
-wget dowload -P xxx https://zenodo.org/records/14044880/files/Clinical_matrix_TARGET_TALL_convert.rds # For T-ALL clinical matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_TALL_convert.rds # For T-ALL RNA matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/Clinical_matrix_TARGET_TALL_convert.rds # For T-ALL clinical matrix 
 
 	## Subset and gene converted matrices for AL analysis and figure
-wget dowload -P xxx https://zenodo.org/records/14044880/files/clinical_matrix_TARGET_AL.rds # For Acute Leuk clinical matrix 
-wget -P xxx https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_AL_convert.rds # For Acute Leuk rna matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/clinical_matrix_TARGET_AL.rds # For Acute Leuk clinical matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_AL_convert.rds # For Acute Leuk rna matrix 
 
 	## Subset and gene converted matrices for ALL analysis and figure
-wget dowload link _matrix_TARGET_ALL_convert.rds xxx # For ALL clinical matrix 
-wget dowload -P xxx lhttps://zenodo.org/records/14044880/files/RNA_matrix_TARGET_ALL_convert.rds# For ALL RNA matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/clinical_matrix_TARGET_ALL_convert.rds # For ALL clinical matrix 
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/records/14044880/files/RNA_matrix_TARGET_ALL_convert.rds# For ALL RNA matrix 
 
 # Other files needed for the analysis 
-wget https://zenodo.org/records/14044880/files/gencode.v36.annotation.gtf
+wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/gencode.v36.annotation.gtf
 
 ```
 
@@ -99,12 +95,13 @@ At this step we assume that the pre-processing was already performed. If not you
 ### Download data
 
 ```bash
+# Depending on where you want to start in the code choose one of Feature count matrix or Deseq object
 # Feature count matrix
 wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data JKT_CRISPR_featurecounts.txt
 # Deseq object 
 wget -P $WORKING_DIR/03_BulkRNA_analysis/03_Output https://zenodo.org/records/14044880/files/dds_CRISPR.rds
 
-#Files needed for the analysis stored on Zenodo
+#Files needed for further analysis that are stored on Zenodo
 # Public peak files that were dowloaded from https://remap.univ-amu.fr/target_page/TAL1:9606
 wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/GSE25000.bed #GSE25000
 wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/GSE29180.bed #GSE29180
