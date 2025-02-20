@@ -1,13 +1,14 @@
 ## Bulk RNA pre-processing
 
-In this section you'll be able to perform the preprocessing of the FASTQ files produced for the CRISPR KO. For preprocessing we used a sh script that can be found here : file in gihub to add.
+In this section you'll be able to perform the preprocessing of the FASTQ files produced for the CRISPR KO.\
+For the preprocessing we made a sh script that can be found [here](/01_BulkRNA_preprocessing/02_Script/script_RNA_preprocess_GIT.sh).\
+Briefly this script allow to automatically detect number of samples and their names based on FASTQ files and perform all the necessary step until featurecount.
 
-REF handle ?
 ```mermaid
 flowchart TD;
 	C@{ shape: docs, label: "FASTQ"} --> id1(Qc : FastQc)
 	C@{ shape: docs, label: "FASTQ"} --> id2(Trimming : Trimmomatic);
-     A@{ shape: rect, label: "Reference fasta" } --> id3(Qc : Hisat2-build);
+     A@{ shape: rect, label: "Reference fasta" } --> id3(Index genome : Hisat2-build);
      id3(Qc : Hisat2-build) --> id4(Mapping : Hisat2);
      id2(Trimming : Trimmomatic) --> id4(Mapping : Hisat2);
       id4(Mapping : Hisat2) --> id5(Conversion, Sort and Index : Samtools)-->id6(Counts mapped reads : FeatureCount);
