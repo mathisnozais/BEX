@@ -42,5 +42,5 @@ Docker available differently :
 docker pull cellprofiler/cellprofiler:4.2.5
 
 # RNA preprocess
-TO PUT SOMETHING HERE
+# Yaml file to prepare a conda environment is available with this Github repository
 ```

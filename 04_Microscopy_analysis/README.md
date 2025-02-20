@@ -66,9 +66,9 @@ The crop region are listed below :
 - PER BEX 850x850 - x4400y80
   
 - 3B6 ACII : 850x850 - x1900y2000
-- 3B6 BEX : x3900y4100  
-- 3B6 BEXTALL : x3850 y3900  
-- 3B6 TAL x3750y2500
+- 3B6 BEX : 850x850 - x3900y4100  
+- 3B6 BEXTALL : 850x850 - x3850 y3900  
+- 3B6 TAL : 850x850 - x3750y2500
 
 Once the region is selected go to Image > Crop \
 Manually set the scale with Analyze > Set scale \
