@@ -16,7 +16,7 @@ If you have any questions on this analysis, please contact [Mathis Nozais](mailt
 ### Overview
 
 This repository contains the instructions and material to reproduce the analysis reported in the article. The bio-informatic analysis are divided in 4 part : 
-- scRNAseq on PTEN<sup>del*</sup> mice
+- scRNAseq on PTEN<sup>del</sup> mice
 - bulkRNAseq on TCGA pubic data
 - bulkRNAseq on CRISPR edited Jurkat cells
 - Confocal microscopy
