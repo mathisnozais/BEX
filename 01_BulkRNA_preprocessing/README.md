@@ -4,15 +4,15 @@ In this section you'll be able to perform the preprocessing of the FASTQ files p
 
 REF handle ?
 ```mermaid
-graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
+flowchart TD;
+	C@{ shape: docs, label: "FASTQ"} --> id1(Qc : FastQc)
+	C@{ shape: docs, label: "FASTQ"} --> id2(Trimming : Trimmomatic);
+     A@{ shape: rect, label: "Reference fasta" } --> id3(Qc : Hisat2-build)
+
 ```
 
-Qc : FastQc
-Trimming : Trimmomatic
+
+
 Mapping : Hisat2
 Sam to Bam : Samtools
 Sort and Index : Samtools
