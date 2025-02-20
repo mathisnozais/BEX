@@ -17,26 +17,26 @@ If you have any questions on this analysis, please contact [Mathis Nozais](mailt
 
 This repository contains the instructions and material to reproduce the analysis reported in the article. The bio-informatic analysis are divided in 4 part : 
 - scRNAseq on PTEN<sup>del*</sup> mice
-- TCGA bulkRNAseq
-- CRISPR bulkRNAseq 
-- Microscopy.
+- bulkRNAseq on TCGA pubic data
+- bulkRNAseq on CRISPR edited Jurkat cells
+- Confocal microscopy
 
- Source code is available in this github repository. Required data and builded Docker images are available respectively in SRA/GEO and Zenodo. Instructions to reproduce the analysis are provided in the different subdirectories:
+ All the code are available in this github repository. Required data and builded Docker images are available respectively in SRA/GEO and Zenodo. Instructions to reproduce the analysis are provided in the different subdirectories:
 
-- Mice scRNAseq
+- scRNAseq on PTEN<sup>del*</sup> mice
     - Seurat preprocessing and analysis of the mice scRNAseq is discribed in the 02_Seurat_analysis folder <br/>
 In order to re do the Figure 1 with Seurat Analysis you can follow guidelines and script here : [02_Seurat_analysis script](02_Seurat_analysis/README.md)
-- TCGA bulkRNAseq
-    - Deseq2 analysis of the TCGA database is discribed in the 03_DESEQ2_analysis folder/xxxx <br/>
-    In order to re do Figure 2 & 3 with TCGA you can follow guidelines and script here : [03_DESEQ2_analysis folder/xxxx ](01_BulkNRA_preprocessing/README.md)
-- CRISPR bulkRNAseq
+- bulkRNAseq on TCGA pubic data
+    - Analysis of the TCGA database is discribed in the 03_BulkRNA_analysis folder <br/>
+    In order to re do Figure 2 & 3 with TCGA you can follow guidelines and script here : [03_BulkRNA_analysis](03_BulkRNA_analysis/README.md)
+- bulkRNAseq on CRISPR edited Jurkat cells
     - Fastq preprocessing of the CRISPR part is discribed in the 01_BulkNRA_preprocessing folder <br/>
-	In order to re do Fastq preprocessing you can follow guidelines and script here : [01_BulkNRA_preprocessing xxx](01_BulkNRA_preprocessing/README.md)
-    - Deseq2 analysis is discribed in the 03_DESEQ2_analysis folder/xxxx <br/>
-    In order to re do Figure 5 you can follow guidelines and script here : [03_DESEQ2_analysis folder/xxxx ](01_BulkNRA_preprocessing/README.md)
-- Microscopy
+	In order to re do Fastq preprocessing you can follow guidelines and script here : [01_BulkNRA_preprocessing](01_BulkNRA_preprocessing/README.md)
+    - Analysis is discribed in the 03_BulkRNA_analysis folder <br/>
+    In order to re do Figure 5 you can follow guidelines and script here : [03_BulkRNA_analysis folder/xxxx ](03_BulkRNA_analysis/README.md)
+- Confocal microscopy
     - The analysis of the confocal images are described in the 04_Microscopy_analysis folder <br/>
-	In order to re do the detection and counting of the nuclei and PLA spot, and to obtain the same image as the paper you can follow : [04_Microscopy_analysis ](01_BulkNRA_preprocessing/README.md)
+	In order to re do the detection and counting of the nuclei and PLA spot, and to obtain the same image as the paper figure 4 you can follow : [04_Microscopy_analysis ](04_Microscopy_analysis/README.md)
 
 ---
 ### Data Availability
