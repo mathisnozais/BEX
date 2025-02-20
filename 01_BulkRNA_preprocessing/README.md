@@ -2,6 +2,22 @@
 
 In this section you'll be able to perform the preprocessing of the FASTQ files produced for the CRISPR KO. For preprocessing we used a sh script that can be found here : file in gihub to add.
 
+REF handle ?
+```mermaid
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
+```
+
+Qc : FastQc
+Trimming : Trimmomatic
+Mapping : Hisat2
+Sam to Bam : Samtools
+Sort and Index : Samtools
+Counts mapped reads : FeatureCount
+
 ### Prerequisites
 
 #### Clone Github
@@ -19,10 +35,13 @@ export WORKING_DIR=/home/nozais/workspace/BEX
 
 ```bash
 #Download the reference genome folder used to the reference folder
-wget -P $WORKING_DIR/References/ htppsxxxxxx .gz
+wget -P $WORKING_DIR/01_BulkRNA_preprocessing/Reference https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/p14/hg38.p14.fa.gz
+wget -P $WORKING_DIR/01_BulkRNA_preprocessing/Reference https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.refGene.gtf.gz
 
-#extract the folder to obtain the fasta, gtf and index files
-gunzip $WORKING_DIR/References/ xxxx .gz
+#extract the folder to obtain the fasta file and gtf
+gunzip -d $WORKING_DIR/01_BulkRNA_preprocessing/Reference/hg38.p14.fa.gz
+gunzip -d $WORKING_DIR/01_BulkRNA_preprocessing/Reference/hg38.refGene.gtf.gz
+
 ```
 
 #### Working environment
