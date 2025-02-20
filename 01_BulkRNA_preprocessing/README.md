@@ -7,16 +7,16 @@ REF handle ?
 flowchart TD;
 	C@{ shape: docs, label: "FASTQ"} --> id1(Qc : FastQc)
 	C@{ shape: docs, label: "FASTQ"} --> id2(Trimming : Trimmomatic);
-     A@{ shape: rect, label: "Reference fasta" } --> id3(Qc : Hisat2-build)
+     A@{ shape: rect, label: "Reference fasta" } --> id3(Qc : Hisat2-build);
+     id3(Qc : Hisat2-build) --> id4(Mapping : Hisat2);
+     id2(Trimming : Trimmomatic) --> id4(Mapping : Hisat2);
+      id4(Mapping : Hisat2) --> id5(Conversion, Sort and Index : Samtools)-->id6(Counts mapped reads : FeatureCount);
+      B@{ shape: rect, label: "Reference gtf" } --> id6(Counts mapped reads : FeatureCount)
 
 ```
 
 
 
-Mapping : Hisat2
-Sam to Bam : Samtools
-Sort and Index : Samtools
-Counts mapped reads : FeatureCount
 
 ### Prerequisites
 
