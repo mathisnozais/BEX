@@ -50,6 +50,7 @@ gunzip -d $WORKING_DIR/01_BulkRNA_preprocessing/Reference/hg38.refGene.gtf.gz
 
 The bulkRNA preprocessing was performed under a conda environment including `multiQC`, `Hisat2`, `Trimmomatic` and `featureCounts`.
 The yaml config environment can be found into the [Container folder](Container/RNA_preproc).
+
 ```bash
 # Create the conda environment using same version and tools as us
 conda env create -f $WORKING_DIR/Container/RNA_preproc/RNAbulk_env.yml
@@ -59,7 +60,7 @@ conda activate RNAbulk
 
 #### Download raw data
 
-Fastq files available on SRA xxxx.
+Fastq files available on SRA/GEO xxxx.
 ```bash
 #Download the Fastq files
 # Jurkat rep1
@@ -78,7 +79,7 @@ wget
 
 ### Run the preprocessing
 
-We made a script that briefly will perform a first step of xxx `Trimmomatic`, mapping will be performed with `Hisat2` and the gene count will be performed with `featureCounts`.
+We made a script that briefly will perform all the preprocessing step from Qc and `Trimmomatic`, to the mapping that will be performed with `Hisat2` and the gene count that will be performed with `featureCounts`.
 
 > [!Important]  
 > Do not modify any folder name or rawdata files, it will mess up the automated detection of samples.
@@ -88,7 +89,7 @@ We made a script that briefly will perform a first step of xxx `Trimmomatic`, ma
 
 ```bash
 # You should activate your conda environement and set the working_dir before launching the script : see prerequisite section.
-sh $WORKING_DIR/01_BulkRNA_preprocessing/02_Script/script_RNA_preprocess.sh
+sh $WORKING_DIR/01_BulkRNA_preprocessing/02_Script/script_RNA_preprocess_GIT.sh WORKING_DIR
 
 ```
 Once the preprocessing is done, you should get all the bam files in the [Preprocessed folder](01_BulkRNA_preprocessing/03_Preprocessed/).

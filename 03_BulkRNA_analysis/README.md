@@ -86,6 +86,9 @@ wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data/Object https://zenodo.org/recor
 wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/gencode.v36.annotation.gtf
 
 ```
+### Analysis
+You can access the code chunk by chunk via "RNA_TCGA_BEX_Git" Rmd. You'll be able to perform the analysis to produce the figure in the paper.
+
 
 ## CRISPR-CAS9 analysis
 
@@ -110,5 +113,6 @@ wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/1404
 wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/SANDA_GR_B.txt #SandaB
 wget -P $WORKING_DIR/03_BulkRNA_analysis/01_Data https://zenodo.org/records/14044880/files/SANDA_GR_C.txt #SandaC
 ```
-
+### Analysis
+You can access the code chunk by chunk via "Bex_RNA_CRISPR_Git" Rmd. You'll be able to perform the analysis to produce the figure in the paper.
 

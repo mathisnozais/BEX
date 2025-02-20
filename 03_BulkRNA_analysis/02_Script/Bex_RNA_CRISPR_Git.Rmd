@@ -91,6 +91,10 @@ saveRDS(dds, file = paste0(WORKING_DIR,"/03_Output/dds_CRISPR.rds"))
 # Loading Deseq obj
 ```{r}
 dds <- readRDS(file = paste0(WORKING_DIR,"/03_Output/dds_CRISPR.rds"))
+
+# Extract count for GEO/SRA
+norm_count <- counts(dds, normalized=TRUE)
+write.table(norm_count, file=paste0(WORKING_DIR,"/03_Output/normalized_count_CRISPR.txt"),sep = "\t")
 ```
 
 
