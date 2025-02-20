@@ -23,7 +23,7 @@ This repository contains the instructions and material to reproduce the analysis
 
  All the code are available in this github repository. Required data and builded Docker images are available respectively in SRA/GEO and Zenodo. Instructions to reproduce the analysis are provided in the different subdirectories:
 
-- scRNAseq on PTEN<sup>del*</sup> mice
+- scRNAseq on PTEN<sup>del</sup> mice
     - Seurat preprocessing and analysis of the mice scRNAseq is discribed in the 02_Seurat_analysis folder <br/>
 In order to re do the Figure 1 with Seurat Analysis you can follow guidelines and script here : [02_Seurat_analysis script](02_Seurat_analysis/README.md)
 - bulkRNAseq on TCGA pubic data
@@ -33,26 +33,28 @@ In order to re do the Figure 1 with Seurat Analysis you can follow guidelines an
     - Fastq preprocessing of the CRISPR part is discribed in the 01_BulkNRA_preprocessing folder <br/>
 	In order to re do Fastq preprocessing you can follow guidelines and script here : [01_BulkNRA_preprocessing](01_BulkNRA_preprocessing/README.md)
     - Analysis is discribed in the 03_BulkRNA_analysis folder <br/>
-    In order to re do Figure 5 you can follow guidelines and script here : [03_BulkRNA_analysis folder/xxxx ](03_BulkRNA_analysis/README.md)
+    In order to re do Figure 5 you can follow guidelines and script here : [03_BulkRNA_analysis](03_BulkRNA_analysis/README.md)
 - Confocal microscopy
     - The analysis of the confocal images are described in the 04_Microscopy_analysis folder <br/>
 	In order to re do the detection and counting of the nuclei and PLA spot, and to obtain the same image as the paper figure 4 you can follow : [04_Microscopy_analysis ](04_Microscopy_analysis/README.md)
 
 ---
 ### Data Availability
+Multiple type of data are available, see here a brief summary and detail access link are provided in each sub-directories.
+
 #### Mice scRNAseq
-Raw count matrix and metadata to assign each cell to a sample for the mice scRNAseq experiment are available in xxxx under the accession number xxx
-Final R Seurat object can be dowloaded via Zenodo xxxx 
+Raw count matrix and metadata to assign each cell to a sample for the mice scRNAseq experiment are available in this repository.
+Final R Seurat object can be dowloaded via Zenodo.
 
 #### TCGA bulkRNA
-Data can be dowloaded from the TCGA website and informations are given on wich samples where used in the detailed analysis.
+Data can be dowloaded from the TCGA website and informations are given on wich samples where used in the detailed analysis. You can also download pre-made matrix that we used on Zenodo.
 
 #### CRISPR bulkRNAseq
-xx FASTQ files are available in SRA under the accession number : xxxx
-Final Deseq2 object can be dowloaded via Zenodo xxx
+7 samples in paired-end are available as FASTQ files in SRA/GEO under the accession number : xxxx
+Final object can be dowloaded via Zenodo.
 
 #### Microscopy 
-Raw files are accessible via xxx. It concern xx cell lines with xx condition each.
+Raw image files are accessible via Zenodo. It concern Jurkat and PEER cell lines and also edited Jurkat cells.
 
 #### Docker images
-You have access to three dockers : one for scRNAseq analysis (named docker 410), one for bulkRNAseq (RNA.... name docker) and one for microscopy (name docker). All availabe in [Zenodo](https://doi.org/10.5281/zenodo.4636520) change link
+You have access to three dockers : one for scRNAseq analysis (named docker 440), one for bulkRNAseq (named docker RNA431-2) and one for microscopy (CellProfiler425). One conda environment for RNAseq preprocessing
