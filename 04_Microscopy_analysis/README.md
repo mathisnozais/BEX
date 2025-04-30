@@ -37,6 +37,7 @@ Raw images from confocal are available on Zenodo. 2 different batch of images wh
 wget -P $WORKING_DIR/04_Microscopy_analysis/01_Data https://zenodo.org/records/14044880/files/Confocal_images.tar.gz
 tar -xvzf $WORKING_DIR/04_Microscopy_analysis/01_Data/Confocal_images.tar.gz
 
+# If using other image be careful they need to be named that way  CellLine_Condition_Date.czi aka JKT_BEXTAL_DDMMYY.czi
 ```
 ### Run the analysis
 Once the data are dowloaded in the input folder you can run the cellprofiler docker to run the analysis on all the confocal images.
