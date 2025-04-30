@@ -64,7 +64,7 @@ Fastq files available on SRA/GEO xxxx.
 ```bash
 #Download the Fastq files
 # Jurkat rep1
-wget -P $WORKING_DIR/01_BulkRNA_preprocessing/01_RawData/Raw
+wget -P $WORKING_DIR/01_BulkRNA_preprocessing/01_RawData/Fastq
 # Jurkat rep2
 wget
 # Jurkat rep3
