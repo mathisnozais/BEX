@@ -254,3 +254,39 @@ print(matches)
 
 
 # GSEA RNAseq vs ChIPseq
+```{r}
+ddsRNA <- readRDS(file = paste0(WORKING_DIR,"03_BulkRNA_analysis/03_Output/dds_CRISPR.rds"))
+resRNA <- results(ddsRNA, contrast = c("condition", "TripleKo", "Control"))
+# sort genes by log2FoldChange)
+gene_list <- resRNA$stat
+names(gene_list) <- rownames(resRNA)
+gene_list <- sort(gene_list, decreasing = TRUE)
+
+gsea_res <- fgsea(pathways = gene_sets,
+                   stats = gene_list,
+                   minSize = 10,  # Taille minimale du set
+                   maxSize = 1000) # Taille maximale du set
+
+fwrite(gsea_res, file= paste0(WORKING_DIR,"03_Output/GSEA_ChIP-histones-gene-sets_VS_RNAseq.txt") , sep="\t", sep2=c("", " ", ""))
+
+leading_edge_df <- gsea_res %>% select(pathway, leadingEdge) %>% unnest(cols = c(leadingEdge))
+leading_edge_list <- split(leading_edge_df$leadingEdge, leading_edge_df$pathway)
+
+length(leading_edge_list$H3K4Me1_down)
+
+topHMarksUp <- gsea_res[ES > 0][head(order(pval), n=10), pathway]
+topHMarksDown <- gsea_res[ES < 0][head(order(pval), n=10), pathway]
+topPathways <- c(topHMarksUp, rev(topHMarksDown))
+plotGseaTable(gene_sets[topPathways], gene_list, gsea_res,
+              gseaParam=0.5)
+
+#Produce plots
+plotEnrichment(gene_sets[["H3K4Me1_down"]], gene_list) + ggtitle("H3K4Me1_down_5000bp")
+plotEnrichment(gene_sets[["H3K4Me1_up"]], gene_list) + ggtitle("H3K4Me1_up_5000bp")
+plotEnrichment(gene_sets[["H3K4Me3_down"]], gene_list) + ggtitle("H3K4Me3_down_1000bp")
+plotEnrichment(gene_sets[["H3K4Me3_up"]], gene_list) + ggtitle("H3K4Me3_up_1000bp")
+plotEnrichment(gene_sets[["H3K27Ac_down"]], gene_list) + ggtitle("H3K27Ac_down_25000bp")
+plotEnrichment(gene_sets[["H3K27Ac_up"]], gene_list) + ggtitle("H3K27Ac_up_25000bp")
+
+gene_set_df <- stack(gene_sets) |>  dplyr::select(term = ind, gene = values)
+```
