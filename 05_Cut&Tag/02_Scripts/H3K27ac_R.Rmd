@@ -84,8 +84,8 @@ write.table(res_sorted_by_padj, file=paste0(WORKING_DIR,"03_Output/dds_H3K27Ac_B
 
 ```{bash}
 # ### Bed files for i-cisTarget
-# cat 04_Analysis/RNAseq2_analysis/dds_H3K27Ac_BexPos_vs_Bexneg_results.txt | grep -v baseMean | awk '$3 < -1 && $7 < 0.05 {print $1}'| sed s/\"//g | awk -F'_' '{s=""; for(i=3;i<=NF-2;i++) s=s $i OFS; sub(OFS "$","",s); print s" "$(NF-1)" "$NF" "$1"_"$2}' OFS="_" >04_Analysis/RNAseq2_analysis/H3K27Ac_down_Padj-0.05_Log2FC_1.bed
-# cat 04_Analysis/RNAseq2_analysis/dds_H3K27Ac_BexPos_vs_Bexneg_results.txt | grep -v baseMean | awk '$3 > 1 && $7 < 0.05 {print $1}'| sed s/\"//g | awk -F'_' '{s=""; for(i=3;i<=NF-2;i++) s=s $i OFS; sub(OFS "$","",s); print s" "$(NF-1)" "$NF" "$1"_"$2}' OFS="_" >04_Analysis/RNAseq2_analysis/H3K27Ac_up_Padj-0.05_Log2FC_-1.bed
+# cat 03_Output/dds_H3K27Ac_BexPos_vs_Bexneg_results.txt | grep -v baseMean | awk '$3 < -1 && $7 < 0.05 {print $1}'| sed s/\"//g | awk -F'_' '{s=""; for(i=3;i<=NF-2;i++) s=s $i OFS; sub(OFS "$","",s); print s" "$(NF-1)" "$NF" "$1"_"$2}' OFS="_" >03_Output/H3K27Ac_down_Padj-0.05_Log2FC_1.bed
+# cat 03_Output/dds_H3K27Ac_BexPos_vs_Bexneg_results.txt | grep -v baseMean | awk '$3 > 1 && $7 < 0.05 {print $1}'| sed s/\"//g | awk -F'_' '{s=""; for(i=3;i<=NF-2;i++) s=s $i OFS; sub(OFS "$","",s); print s" "$(NF-1)" "$NF" "$1"_"$2}' OFS="_" >03_Output/H3K27Ac_up_Padj-0.05_Log2FC_-1.bed
 ``
 
 ## Volcano
