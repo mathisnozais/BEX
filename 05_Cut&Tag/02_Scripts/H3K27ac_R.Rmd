@@ -12,7 +12,7 @@ editor_options:
 #################
 
 Script for Cut & Tag analysis of H3K27Ac mark in Jurkat and Jurkat .
-Made with Docker rna431-2
+Made with Docker rna431-2 (available on Zenodo)
 
 #################
 
