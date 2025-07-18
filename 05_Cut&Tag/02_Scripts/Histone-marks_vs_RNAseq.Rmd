@@ -1,0 +1,256 @@
+---
+output: html_document
+author: "Delphine Potier"
+output:
+  html_document:
+    code_folding: hide
+    code_download: true
+editor_options:
+  chunk_output_type: console
+---
+
+#################
+
+Script for histone marks (H3K27ac, H3K4me1, H3K4me3) in Jurkat WT and Jurkat CRISPR-edited clones (1D9,2G5 and 1B6).
+Made with Docker rna431-2 (available on Zenodo)
+
+#################
+
+```{r}
+library(DESeq2)
+library(ggplot2)
+library(Rsubread)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(dplyr)
+library(tidyr)
+library(fgsea)
+library(ComplexHeatmap)
+library(ggrepel)
+library(RColorBrewer)
+library(ChIPseeker)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(pathview)
+library(DT)
+library(GenomicRanges)
+library(data.table)
+library(purrr)
+```
+
+
+```{r}
+# Set the variable to your working directory
+#WORKING_DIR <- "/yourcomputer/BEX/03_BulkRNA_analysis" # should point to the github folder that you clone
+WORKING_DIR <- "/workspace/NASBioinfo/LALT/BIOINFO/BEX/"  # to remove
+#  Path to the folder that will contain output objects
+OUTPUT_PATH <- (paste0(WORKING_DIR,"03_Output/"))
+BROAD_PEAKS_DIR <- "03_Output/H3K4me1_broad_nomodel/bwa/merged_library/macs3/broad_peak/"
+NARROW_PEAKS_DIR <- "03_Output/H3K4Me3_H3K27Ac_narrow_nomodel/bwa/merged_library/macs3/narrow_peak/"
+
+# To annotate peaks
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+
+# function to extract coordinates
+extract_coords <- function(x) {
+  parts <- strsplit(x, "_")[[1]]
+  n <- length(parts)
+  name <- paste(parts[1:2], collapse = "_")
+  chr <- paste(parts[3:(n-2)], collapse = "_")
+  start <- as.numeric(parts[n-1])
+  end <- as.numeric(parts[n])
+  return(c(name, chr, start, end))
+}
+```
+
+# K4Me1 differential peaks
+```{r}
+ddsK4Me1 <- readRDS(file = paste0(WORKING_DIR,"03_Output/dds_K4Me1_BexPos_vs_Bexneg.rds"))
+resK4Me1 <- results(ddsK4Me1, contrast = c("condition", "BexNeg", "BexPos"))
+resK4Me1_sorted_by_padj <- resK4Me1[order(resK4Me1$padj), ]
+
+K4Me1_diff <- as.data.frame(resK4Me1_sorted_by_padj)
+
+# keep regions with padj < 0.05
+K4Me1_diff <- K4Me1_diff[!is.na(K4Me1_diff$padj) & K4Me1_diff$padj < 0.05 & abs(K4Me1_diff$log2FoldChange) >1, ]
+dim(K4Me1_diff)
+dim(K4Me1_diff  %>% filter(log2FoldChange < 1))
+dim(K4Me1_diff  %>% filter(log2FoldChange > 1))
+
+#Put back coordinates
+#K4Me1_diff$name <- rownames(K4Me1_diff)
+
+coords <- t(sapply(rownames(K4Me1_diff), extract_coords))
+colnames(coords) <- c("name", "chr", "start", "end")
+coords <- as.data.frame(coords)
+coords$start <- as.numeric(coords$start)
+coords$end <- as.numeric(coords$end)
+
+# Combine with DESeq2 values
+K4Me1_diff <- cbind(K4Me1_diff, coords)
+
+gr_K4Me1_diff <- GRanges(
+  seqnames = K4Me1_diff$chr,
+  ranges = IRanges(start = K4Me1_diff$start, end = K4Me1_diff$end),
+  strand = "*",
+  log2FC = K4Me1_diff$log2FoldChange,
+  padj = K4Me1_diff$padj,
+  region_name = K4Me1_diff$name
+)
+
+K4Me1_diff_peak_annotation <- annotatePeak(
+  gr_K4Me1_diff,
+  TxDb = txdb,
+  annoDb = "org.Hs.eg.db"
+)
+
+annotated_K4Me1_diff_df <- as.data.frame(K4Me1_diff_peak_annotation)
+
+# Get gene list for GSEA
+K4Me1_down_genes <- annotated_K4Me1_diff_df  %>% filter(abs(distanceToTSS) <5000) %>% filter(log2FC < 1)
+H3K4Me1_down_asso <- K4Me1_down_genes[, c("region_name","seqnames","start","end","geneId", "SYMBOL", "log2FC", "padj", "annotation","distanceToTSS")]
+dim(K4Me1_down_genes)
+K4Me1_down_genes <- unique(K4Me1_down_genes$SYMBOL)
+length(K4Me1_down_genes)
+K4Me1_up_genes <- annotated_K4Me1_diff_df  %>% filter(abs(distanceToTSS) <5000) %>% filter(log2FC > 1)
+H3K4Me1_up_asso <- K4Me1_up_genes[, c("region_name","seqnames","start","end","geneId", "SYMBOL", "log2FC", "padj", "annotation","distanceToTSS")]
+dim(K4Me1_up_genes)
+K4Me1_up_genes <- unique(K4Me1_up_genes$SYMBOL)
+length(K4Me1_up_genes)
+H3K4Me1_diff_asso <- rbind(H3K4Me1_down_asso,H3K4Me1_up_asso)
+write.table(H3K4Me1_diff_asso, file=paste0(WORKING_DIR,"03_Output/H3K4Me1_diff_regions2genes_association_5kb_to_TSS.txt"),sep = "\t")
+```
+
+# K4Me3 differential peaks
+```{r}
+ddsK4Me3 <- readRDS(file = paste0(WORKING_DIR,"03_Output/dds_K4Me3_BexPos_vs_Bexneg.rds"))
+resK4Me3 <- results(ddsK4Me3, contrast = c("condition", "BexNeg", "BexPos"))
+resK4Me3_sorted_by_padj <- resK4Me3[order(resK4Me3$padj), ]
+
+K4Me3_diff <- as.data.frame(resK4Me3_sorted_by_padj)
+# keep regions with padj < 0.05
+K4Me3_diff <- K4Me3_diff[!is.na(K4Me3_diff$padj) & K4Me3_diff$padj < 0.05 & abs(K4Me3_diff$log2FoldChange) >1, ]
+dim(K4Me3_diff)
+dim(K4Me3_diff  %>% filter(log2FoldChange < 1))
+dim(K4Me3_diff  %>% filter(log2FoldChange > 1))
+
+#Put back coordinates
+#K4Me3_diff$name <- rownames(K4Me3_diff)
+
+coords <- t(sapply(rownames(K4Me3_diff), extract_coords))
+colnames(coords) <- c("name", "chr", "start", "end")
+coords <- as.data.frame(coords)
+coords$start <- as.numeric(coords$start)
+coords$end <- as.numeric(coords$end)
+
+# Combine with DESeq2 values
+K4Me3_diff <- cbind(K4Me3_diff, coords)
+
+gr_K4Me3_diff <- GRanges(
+  seqnames = K4Me3_diff$chr,
+  ranges = IRanges(start = K4Me3_diff$start, end = K4Me3_diff$end),
+  strand = "*",
+  log2FC = K4Me3_diff$log2FoldChange,
+  padj = K4Me3_diff$padj,
+  region_name = K4Me3_diff$name
+)
+
+K4Me3_diff_peak_annotation <- annotatePeak(
+  gr_K4Me3_diff,
+  TxDb = txdb,
+  annoDb = "org.Hs.eg.db"
+)
+
+annotated_K4Me3_diff_df <- as.data.frame(K4Me3_diff_peak_annotation)
+
+# Get gene list for GSEA
+K4Me3_down_genes <- annotated_K4Me3_diff_df  %>% filter(abs(distanceToTSS) <1000) %>% filter(log2FC < 1)
+H3K4Me3_down_asso <- K4Me3_down_genes[, c("region_name","seqnames","start","end","geneId", "SYMBOL", "log2FC", "padj", "annotation","distanceToTSS")]
+K4Me3_down_genes <- unique(K4Me3_down_genes$SYMBOL)
+length(K4Me3_down_genes)
+K4Me3_up_genes <- annotated_K4Me3_diff_df  %>% filter(abs(distanceToTSS) <1000) %>% filter(log2FC > 1)
+H3K4Me3_up_asso <- K4Me3_up_genes[, c("region_name","seqnames","start","end","geneId", "SYMBOL", "log2FC", "padj", "annotation","distanceToTSS")]
+K4Me3_up_genes <- unique(K4Me3_up_genes$SYMBOL)
+length(K4Me3_up_genes)
+H3K4Me3_diff_asso <- rbind(H3K4Me3_down_asso,H3K4Me3_up_asso)
+write.table(H3K4Me3_diff_asso, file=paste0(WORKING_DIR,"03_Output/H3K4Me3_diff_regions2genes_association_1kb_to_TSS.txt"),sep = "\t")
+```
+
+# K27Ac differential peaks
+```{r}
+ddsK27Ac <- readRDS(file = paste0(WORKING_DIR,"03_Output/dds_K27Ac_BexPos_vs_Bexneg.rds"))
+resK27Ac <- results(ddsK27Ac, contrast = c("condition", "BexNeg", "BexPos"))
+resK27Ac_sorted_by_padj <- resK27Ac[order(resK27Ac$padj), ]
+
+K27Ac_diff <- as.data.frame(resK27Ac_sorted_by_padj)
+# keep regions with padj < 0.05
+K27Ac_diff <- K27Ac_diff[!is.na(K27Ac_diff$padj) & K27Ac_diff$padj < 0.05 & abs(K27Ac_diff$log2FoldChange) >1, ]
+dim(K27Ac_diff)
+dim(K27Ac_diff  %>% filter(log2FoldChange < 1))
+dim(K27Ac_diff  %>% filter(log2FoldChange > 1))
+
+#Put back coordinates
+coords <- t(sapply(rownames(K27Ac_diff), extract_coords))
+colnames(coords) <- c("name", "chr", "start", "end")
+coords <- as.data.frame(coords)
+coords$start <- as.numeric(coords$start)
+coords$end <- as.numeric(coords$end)
+
+# Combine with DESeq2 values
+K27Ac_diff <- cbind(K27Ac_diff, coords)
+
+gr_K27Ac_diff <- GRanges(
+  seqnames = K27Ac_diff$chr,
+  ranges = IRanges(start = K27Ac_diff$start, end = K27Ac_diff$end),
+  strand = "*",
+  log2FC = K27Ac_diff$log2FoldChange,
+  padj = K27Ac_diff$padj,
+  region_name = K27Ac_diff$name
+)
+
+K27Ac_diff_peak_annotation <- annotatePeak(
+  gr_K27Ac_diff,
+  TxDb = txdb,
+  annoDb = "org.Hs.eg.db"
+)
+
+annotated_K27Ac_diff_df <- as.data.frame(K27Ac_diff_peak_annotation)
+
+# Get gene list for GSEA
+K27Ac_down_genes <- annotated_K27Ac_diff_df  %>% filter(abs(distanceToTSS) <25000) %>% filter(log2FC < 1)
+K27Ac_down_asso <- K27Ac_down_genes[, c("region_name","seqnames","start","end","geneId", "SYMBOL", "log2FC", "padj", "annotation","distanceToTSS")]
+K27Ac_down_genes <- unique(K27Ac_down_genes$SYMBOL)
+length(K27Ac_down_genes)
+K27Ac_up_genes <- annotated_K27Ac_diff_df  %>% filter(abs(distanceToTSS) <25000) %>% filter(log2FC > 1)
+K27Ac_up_asso <- K27Ac_up_genes[, c("region_name","seqnames","start","end","geneId", "SYMBOL", "log2FC", "padj", "annotation","distanceToTSS")]
+K27Ac_up_genes <- unique(K27Ac_up_genes$SYMBOL)
+length(K27Ac_up_genes)
+K27Ac_diff_asso <- rbind(K27Ac_down_asso,K27Ac_up_asso)
+write.table(K27Ac_diff_asso, file=paste0(WORKING_DIR,"03_Output/H3K27Ac_diff_regions2genes_association_25kb_to_TSS.txt"),sep = "\t")
+```
+
+#prepare genesets for GSEA
+```{r}
+gene_sets <- list(H3K4Me1_down = K4Me1_down_genes, H3K4Me1_up = K4Me1_up_genes, H3K4Me3_down = K4Me3_down_genes, H3K4Me3_up = K4Me3_up_genes, H3K27Ac_down = K27Ac_down_genes, H3K27Ac_up = K27Ac_up_genes)
+```
+
+```{r}
+# Combine all lists in a single vector with an associated mark
+all_genes <- map2_df(gene_sets, names(gene_sets), ~data.frame(Gene = .x, Mark = .y))
+
+# Count number of dmarks per genes
+gene_counts <- all_genes %>%
+  distinct() %>%
+  count(Gene, name = "NumMarks") %>%
+  arrange(desc(NumMarks))
+
+# Check genes with at least two differential marks
+genes_multiple_marks <- gene_counts %>%
+  filter(NumMarks >= 2)
+
+gene_of_interest <- "GIMAP7"
+matches <- names(gene_sets)[sapply(gene_sets, function(x) gene_of_interest %in% x)]
+print(matches)
+```
+
+
+# GSEA RNAseq vs ChIPseq
