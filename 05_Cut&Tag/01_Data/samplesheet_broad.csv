@@ -1,0 +1,11 @@
+sample,fastq_1,fastq_2,replicate,antibody,control,control_replicate
+JKT_K27Me3,01_Data/JKT_K27Me3_1.fastq.gz,01_Data/JKT_K27Me3_2.fastq.gz,1,K27Me3,JKT_IgG,1
+JKT_K4Me1,01_Data/JKT_K4Me1_1.fastq.gz,01_Data/JKT_K4Me1_2.fastq.gz,1,K4Me1,JKT_IgG,1
+3B6_K27Me3,01_Data/3B6_K27Me3_1.fastq.gz,01_Data/3B6_K27Me3_2.fastq.gz,1,K27Me3,3B6_IgG,1
+3B6_K4Me1,01_Data/3B6_K4Me1_1.fastq.gz,01_Data/3B6_K4Me1_2.fastq.gz,1,K4Me1,3B6_IgG,1
+1D9_K27Me3,01_Data/1D9_K27Me3_1.fastq.gz,01_Data/1D9_K27Me3_2.fastq.gz,1,K27Me3,3B6_IgG,1
+1D9_K4Me1,01_Data/1D9_K4Me1_1.fastq.gz,01_Data/1D9_K4Me1_2.fastq.gz,1,K4Me1,3B6_IgG,1
+2G5_K27Me3,01_Data/2G5_K27Me3_1.fastq.gz,01_Data/2G5_K27Me3_2.fastq.gz,1,K27Me3,3B6_IgG,1
+2G5_K4Me1,01_Data/2G5_K4Me1_1.fastq.gz,01_Data/2G5_K4Me1_2.fastq.gz,1,K4Me1,3B6_IgG,1
+JKT_IgG,01_Data/JKT_IgG_1.fastq.gz,01_Data/JKT_IgG_2.fastq.gz,1,,,
+3B6_IgG,01_Data/3B6_IgG_1.fastq.gz,01_Data/3B6_IgG_2.fastq.gz,1,,,
