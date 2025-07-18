@@ -11,7 +11,7 @@ editor_options:
 
 #################
 
-Script for Cut & Tag analysis of H3K27Ac mark in Jurkat and Jurkat .
+Script for Cut & Tag analysis of H3K27Ac mark in Jurkat WT and Jurkat CRISPR-edited clones (1D9,2G5 and 1B6).
 Made with Docker rna431-2 (available on Zenodo)
 
 #################
