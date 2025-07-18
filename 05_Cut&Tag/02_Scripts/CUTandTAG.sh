@@ -16,8 +16,8 @@
 cd $WDIR
 
 ### Narrow peaks
-nextflow run nf-core/chipseq --input 01_RawData/RUN_EN00008978/ChIP_histone/samplesheet_narrow.csv --genome GRCh38 --read_length 150 -profile docker --narrow_peak TRUE --outdir 02_Preprocessed/ChIPseq/H3K4Me3_H3K27Ac_narrow_nomodel/
+nextflow run nf-core/chipseq --input 01_RawData/samplesheet_narrow.csv --genome GRCh38 --read_length 150 -profile docker --narrow_peak TRUE --outdir 03_Output/H3K4me3_H3K27ac_narrow_nomodel/
 
 ### Broad peaks
-nextflow run nf-core/chipseq --input 01_RawData/RUN_EN00008978/ChIP_histone/samplesheet_broad.csv --genome GRCh38 --read_length 150 -profile docker --outdir 02_Preprocessed/ChIPseq/histones_nf-core_broad_nomodel
+nextflow run nf-core/chipseq --input 01_RawData/samplesheet_broad.csv --genome GRCh38 --read_length 150 -profile docker --outdir 03_Output/H3K4me1_broad_nomodel/
 
