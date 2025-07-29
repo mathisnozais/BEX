@@ -53,8 +53,11 @@ This will run the following steps :
 
 
 2) Downstream analysis in R (see Rmd script)
-Downstream analyses were performed in R (see the XXX.Rmd script). 
-* Differential peak analysis using DESeq2 (jurkat BEXKO versus jurkat BEXWT) and Generation of count tables available in GEO: Raw counts; Library size–normalized counts; Variance-stabilized counts (vst()) for each histone mark.
+Downstream analyses were performed in R and included differential peak analysis using DESeq2 (Jurkat BEXKO vs Jurkat BEXWT) and the generation of count tables available in GEO (raw counts, library size–normalized counts, and variance-stabilized counts) for each histone mark.
+
+Refer to the following scripts for details:
+* H3K27ac_R.Rmd, H3K4me1_R.Rmd, and H3K4me3_R.Rmd for individual histone mark analysis
+* Histone-marks_vs_RNAseq.Rmd for histone marks comparison to RNA-seq (GSEA analysis).
 
 
 
