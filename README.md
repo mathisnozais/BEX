@@ -15,11 +15,12 @@ If you have any questions on this analysis, please contact [Mathis Nozais](mailt
 ---
 ### Overview
 
-This repository contains the instructions and material to reproduce the analysis reported in the article. The bio-informatic analysis are divided in 4 part : 
+This repository contains the instructions and material to reproduce the analysis reported in the article. The bio-informatic analysis are divided in 5 part : 
 - scRNAseq on PTEN<sup>del</sup> mice
 - bulkRNAseq on TCGA pubic data
 - bulkRNAseq on CRISPR edited Jurkat cells
 - Confocal microscopy
+- Cut&Tag
 
  All the code are available in this github repository. Required data and builded Docker images are available respectively in SRA/GEO and Zenodo. Instructions to reproduce the analysis are provided in the different subdirectories:
 
