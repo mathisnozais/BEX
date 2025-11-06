@@ -1,3 +1,5 @@
+**This repository contains the instructions and material to reproduce the analysis reported in the article :**
+
 # Ectopic expression of BEX genes in T-cell Acute Lymphoblastic leukemia
 
 Authors : Quessada Julie<sup>1,2*</sup>, Nozais Mathis<sup>1*</sup>, Grosjean Clémence<sup>1</sup>, Pankaew Saran<sup>1,3</sup>, Sara Allelova<sup>1</sup>, Potier Delphine<sup>1</sup>, Loosveld Marie<sup>1,2,@</sup> & Payet Bornet Dominique<sup>1,@</sup>  
@@ -7,7 +9,10 @@ Authors : Quessada Julie<sup>1,2*</sup>, Nozais Mathis<sup>1*</sup>, Grosjean Cl
 *These authors contributed equally: Julie Quessada & Mathis Nozais  
 @Corresponding authors :Loosveld Marie, Dominique Payet-Bornet
 
-Link to article : (TO come) put DOI  
+PMID: 40811813 
+
+Link to article : [DOI: 10.1182/bloodadvances.2024015174 ](https://ashpublications.org/bloodadvances/article/doi/10.1182/bloodadvances.2024015174/546725/Ectopic-expression-of-BEX-genes-in-T-cell-Acute)
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14044880.svg)](https://doi.org/10.5281/zenodo.14044880)
 
 If you have any questions on this analysis, please contact [Mathis Nozais](mailto:mathis.nozais@live.fr)
@@ -15,7 +20,7 @@ If you have any questions on this analysis, please contact [Mathis Nozais](mailt
 ---
 ### Overview
 
-This repository contains the instructions and material to reproduce the analysis reported in the article. The bio-informatic analysis are divided in 5 part : 
+The bio-informatic analysis are divided in 5 part : 
 - scRNAseq on PTEN<sup>del</sup> mice
 - bulkRNAseq on TCGA pubic data
 - bulkRNAseq on CRISPR edited Jurkat cells
