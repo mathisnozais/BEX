@@ -1,0 +1,55 @@
+# AUTHORS - BEX bioinformatics repository
+# Repository: https://github.com/mathisnozais/BEX
+# This repository provides scripts and instruction for reproducing analyses; it is associated to a zenodo repository including docker containers, intermediate files and final objects
+# DOI: https://zenodo.org/record/14044880
+# Original associated research article: Quessada, Nozais et al., Ectopic expression of BEX genes in T-cell Acute Lymphoblastic Leukemia (2025). DOI: 10.1182/bloodadvances.2024015174. 
+
+# Core contributors (code, pipelines, Docker)
+Mathis Nozais (Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France) 
+  - Role: Lead developer
+  - Contribution: Developed pipelines and analysis for scRNA-seq, RNAseq, and confocal microscopy; created Docker images for reproducible execution.
+
+Saran Pankaew (Aix Marseille Univ, CNRS, I2M, Marseille, France)
+  - Role: Developer
+  - Contribution: Performed preliminary analysis of TCGA RNAseq data.
+
+# Contributors
+## Contributors with specific input on analyses
+Julie Quessada (Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France; APHM, Hôpital La Timone, Marseille, France)
+  - Role: Contributor
+  - Contribution: Provided input on data interpretation and analysis presentation.
+
+Clémence Grosjean (Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France)
+  - Role: Contributor
+  - Contribution: Provided expertise on confocal microscopy data interpretation and analysis presentation.
+
+Charlotte Savey (Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France)
+  - Role: Contributor
+  - Contribution: Provided expertise on analysis presentation.
+
+Sara Allelova (Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France)
+  - Role: Contributor
+  - Contribution: Provided input on analysis presentation.
+
+## Contributors as project leaders
+Marie Loosveld (Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France; APHM, Hôpital La Timone, Marseille, France)
+  - Role: Contributor and Project leader
+  - Contribution: Originated the project; provided strategic guidance and oversight for the project and its results interpretation.
+
+Dominique Payet-Bornet (Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France)
+  - Role: Contributor and Project leader
+  - Contribution: Originated the project; provided strategic guidance and oversight for the project and its results interpretation.
+
+# Bioinformatics supervision and scientific guidance
+Delphine Potier (Aix Marseille Univ, CNRS, INSERM, CRCM, Marseille, France)
+  - Role: Bioinformatics lead
+  - Contribution: Supervised the bioinformatics work, including pipeline design, choice of tools and methods, Dockerization, and interpretation of results; performed CUT&Tag analysis.
+
+# Notes:
+#######################
+# - This repository is associated with the research article from Quessada, Nozais et al. (DOI: 10.1182/bloodadvances.2024015174), but authorship here reflects contributions specifically to computational and bioinformatics resources.
+# - Roles:
+#    - Core contributors: main contributor to code and pipelines (Lead developer) or significant contribution to code or data processing (Developer).
+#    - Contributor: input on analysis, data interpretation, or documentation (Contributor) and strategic guidance for the overall project (Project leader).
+#    - Bioinformatics lead: supervision of all bioinformatics work for this repository
+# - The repository includes scripts & instructions whereas Docker containers, intermediate files, and final objects to facilitate reproducible research are available on zenodo (DOI: https://zenodo.org/record/14044880).
